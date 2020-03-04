@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.SignalR;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
-using SignalRSampleApp;
+using Microsoft.AspNetCore.SignalR;
 
-namespace MultiMinesweeper.Chat
+namespace MultiMinesweeper.Hub
 {
-    public class ChatHub : Hub
+    public class ChatHub : Microsoft.AspNetCore.SignalR.Hub
     {
         public override Task OnConnectedAsync()
         {
