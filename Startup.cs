@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MultiMinesweeper.Hub;
-
 namespace MultiMinesweeper
 {
     public class Startup
@@ -43,8 +42,10 @@ namespace MultiMinesweeper
                     });
             });
             services.AddSignalR();
+            services.AddTransient<ChatHub>();
+            services.AddTransient<GameHub>();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-
+           
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -65,12 +66,14 @@ namespace MultiMinesweeper
             
             app.UseSignalR(hubRouteBuilder => {
                 hubRouteBuilder.MapHub<ChatHub>("/chat");
+                hubRouteBuilder.MapHub<GameHub>("/game");
             });
 
+            
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
-            
+            app.UseWebSockets();
             app.UseMvc(routes =>
             {
                 routes.MapRoute(

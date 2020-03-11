@@ -5,6 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Folder Include="js" />
         <Folder Include="wwwroot\" />
         <Folder Include="wwwroot\js" />
     </ItemGroup>
@@ -13,6 +14,8 @@
         <PackageReference Include="Microsoft.AspNetCore.App" />
         <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.1.2" PrivateAssets="All" />
         <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.0.4" />
+        <PackageReference Include="ServiceStack.Redis" Version="5.8.0" />
+        <PackageReference Include="WebSocketManager" Version="1.0.1" />
     </ItemGroup>
 
 </Project>

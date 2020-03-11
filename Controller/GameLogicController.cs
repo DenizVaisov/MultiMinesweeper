@@ -14,11 +14,17 @@ namespace MultiMinesweeper.Controller
     {
         [Route("GameLogic/FieldSize")]
         public JsonResult FieldSize()
-        {
+        { 
            MineField mineField = new MineField{Columns = 16, Rows = 16};
            return Json(mineField);
         }
 
+        [Route("GameLogic/GameField")]
+        public JsonResult GameField()
+        {
+            Game game = new Game();
+            return Json(game.InitialiazeGameField());
+        }
 
         [Route("GameLogic/FromClient")]
         public JsonResult FromClient()
