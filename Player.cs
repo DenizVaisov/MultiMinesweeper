@@ -1,4 +1,6 @@
-﻿namespace MultiMinesweeper
+﻿using System.Collections.Generic;
+
+namespace MultiMinesweeper
 {
     public class Player
     {

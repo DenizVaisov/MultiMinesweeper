@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using MultiMinesweeper.Hub;
 using MultiMinesweeper.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -12,6 +13,12 @@ namespace MultiMinesweeper.Controller
     using Microsoft.AspNetCore.Mvc; 
     public class GameLogicController : Controller
     {
+        private readonly IGameRepository _repository;
+        public GameLogicController(IGameRepository gameRepository)
+        {
+            _repository = gameRepository;
+        }
+       
         [Route("GameLogic/FieldSize")]
         public JsonResult FieldSize()
         { 
@@ -47,7 +54,7 @@ namespace MultiMinesweeper.Controller
 
             return Json(str);
         }
-        
+
         [HttpPost]
         [Route("GameLogic/ClickedCell")]
         public JsonResult ClickedCell([FromBody] MineField mineField)
@@ -63,9 +70,8 @@ namespace MultiMinesweeper.Controller
            
             
             JObject mf = new JObject(
-                new JProperty("Columns",mineField.Columns),
+                new JProperty("Columns", mineField.Columns),
                 new JProperty("Rows", mineField.Rows));
-            
             try
             {
                 using (StreamWriter streamWriter = new StreamWriter(writePath, false, System.Text.Encoding.Default))

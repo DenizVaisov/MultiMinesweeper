@@ -6,13 +6,15 @@ namespace MultiMinesweeper
     public class Game
     {
         public string Id { get; set; }
+        
         public Player Player1 { get; private set; }
         public Player Player2 { get; private set; }
         
         public Player CurrentPlayer { get; set; }
         
         public const int NumberOfRows = 16;
-        
+        public List<GameField[][]> Cells { get; set; }
+
         public const int NumberOfColumns = 16;
         
         public GameField[][] GameField;
@@ -21,8 +23,10 @@ namespace MultiMinesweeper
         public bool InProgress { get; set; }
         public Game()
         {
+            InitialiazeGameField();
             Player1 = new Player();
             Player2 = new Player();
+            CurrentPlayer = new Player();
         }
 
         public Player GetPlayer(string connectionId)
@@ -36,6 +40,18 @@ namespace MultiMinesweeper
                 return Player2;
             }
             return null;
+        }
+        
+        public void NextPlayer()
+        {
+            if (CurrentPlayer == Player1)
+            {
+                CurrentPlayer = Player2;
+            }
+            else
+            {
+                CurrentPlayer = Player1;
+            }
         }
         
         public bool HasPlayer(string connectionId)
@@ -58,14 +74,14 @@ namespace MultiMinesweeper
             for (int i = 0; i < NumberOfRows; i++)
                 GameField[i] = new GameField[NumberOfRows];
             
-            for (int x = 0; x < NumberOfRows; x++)
-            {
-                for (int y = 0; y < NumberOfColumns; y++)
-                {
-                    GameField[x][y].Cell = EmptyCell;
-                    GameField[x][y].ClickedCell = true;
-                }
-            }
+            return GameField;
+        }
+
+        public GameField[][] PlaceMines(int row, int cell)
+        {
+            GameField[row][cell].MinedCell = true;
+            GameField[row][cell].ClickedCell = true;
+            
             return GameField;
         }
     }

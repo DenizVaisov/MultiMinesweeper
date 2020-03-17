@@ -8,5 +8,7 @@ namespace MultiMinesweeper
         Task MakeTurn(string player);
         Task PlayerTurn(Player player1, Player player2);
         Task ClickedCell();
+
+        Task Concede();
     }
 }
