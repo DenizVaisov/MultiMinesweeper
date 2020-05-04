@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace MultiMinesweeper.Hub
 {
+    [Authorize]
     public class ChatHub : Microsoft.AspNetCore.SignalR.Hub
     {
         public override Task OnConnectedAsync()
@@ -20,8 +22,8 @@ namespace MultiMinesweeper.Hub
         
         public async Task SendMessage(string user, string message)
         {
-            Console.WriteLine("Message Received");
-            await this.Clients.All.SendAsync("ReceiveMessage", user, message);
+            Console.WriteLine($"Message Received by: {user}");
+            await this.Clients.All.SendAsync("ReceiveMessage", Context.User.Identity.Name, message);
         }
     }
 }

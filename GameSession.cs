@@ -1,4 +1,6 @@
-﻿namespace MultiMinesweeper
+﻿using MultiMinesweeper.Model;
+
+namespace MultiMinesweeper
 {
     public class GameSession
     {

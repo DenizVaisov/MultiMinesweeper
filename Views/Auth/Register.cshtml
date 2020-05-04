@@ -1,0 +1,61 @@
+﻿@model MultiMinesweeper.Model.Register
+
+@{
+    Layout = "_Layout";
+}
+
+@section Styles
+{
+    @* <link href="/styles/auth.css" rel="stylesheet"> *@
+}
+
+@section LibStyles
+{
+}
+
+@section Scripts
+{
+    <script type="text/javascript">
+        document.addEventListener('input', function () { 
+           var password = document.getElementById('password');
+           var confirmPassword = document.getElementById('password-confirm');
+           var confirm = document.getElementById('confirm');
+           
+           if(password.value !== confirmPassword.value){
+            
+              confirm.style.cssText = 'display:block';
+           }
+           else {
+               confirm.style.cssText = 'display:none';
+           }
+         })
+    </script>
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="offset-4 col-md-4">
+            <div id="box1" class="auth-form-container">
+                <form method="post" action="@Url.Action("Register", "Auth")">
+                    @Html.AntiForgeryToken()
+                    <h3 align="center">Регистрация</h3>
+                    <div class="input-group">
+                        <input placeholder="Логин" id="login" class="form-control mb-3" type="text" name="Login" required/>
+                    </div>
+                    <div class="input-group">
+                        <input placeholder="Пароль" id="password" class="form-control mb-3" type="password" name="Password" required/>
+                    </div>
+                    <div class="input-group">
+                        <input placeholder="Проверка пароля" id="password-confirm" class="form-control mb-3" type="password" name="Password" required/>
+                    </div>
+                    <div id="confirm" style="display: none" class="input-group">
+                        <p class="text-danger">Пароли не совпадают</p>
+                    </div>
+                    <button type="submit" class="btn btn-outline-success btn-block">Зарегистрировать</button>
+                    <a href="@Url.Action("SignIn", "Auth")">Авторизация</a>
+                </form>
+                <p class="text-danger" >@Model.Message</p>
+            </div>
+        </div>
+    </div>
+</div>

@@ -3,29 +3,18 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using MultiMinesweeper.Hub;
 using MultiMinesweeper.Model;
+using MultiMinesweeper.Repository;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace MultiMinesweeper.Controller
+namespace MultiMinesweeper.Controllers
 {
     using Microsoft.AspNetCore.Mvc; 
     public class GameLogicController : Controller
     {
-        private readonly IGameRepository _repository;
-        public GameLogicController(IGameRepository gameRepository)
-        {
-            _repository = gameRepository;
-        }
-       
-        [Route("GameLogic/FieldSize")]
-        public JsonResult FieldSize()
-        { 
-           MineField mineField = new MineField{Columns = 16, Rows = 16};
-           return Json(mineField);
-        }
-
         [Route("GameLogic/GameField")]
         public JsonResult GameField()
         {

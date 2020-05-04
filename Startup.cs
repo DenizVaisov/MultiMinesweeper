@@ -1,12 +1,19 @@
 ﻿using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MultiMinesweeper.Hub;
+using MultiMinesweeper.Repository;
+
 namespace MultiMinesweeper
 {
     public class Startup
@@ -18,15 +25,23 @@ namespace MultiMinesweeper
 
         public IConfiguration Configuration { get; }
         
-        
+        public const string CookieAuthScheme = "CookieAuthScheme";
+
         
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            string postgresConnection = "Server=localhost;Port=5432;Database=gamesession;User Id=postgres;Password=postgres";
-            services.AddDbContext<RepositoryContext>(options => options.UseNpgsql (postgresConnection));
-            services.AddSingleton<IGameRepository>(new GameRepository());
+            string postgresConnection =  Configuration.GetConnectionString("DefaultConnection");
+            services.AddDbContext<RepositoryContext>(options => options.UseNpgsql(postgresConnection));
+//            services.AddSingleton<IGameRepository>(new GameRepository());
             services.AddSingleton(new Random());
+            
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options => //CookieAuthenticationOptions
+                {
+                    options.LoginPath = new Microsoft.AspNetCore.Http.PathString("/Auth/SignIn");
+                });
+            
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
@@ -49,6 +64,7 @@ namespace MultiMinesweeper
                         .AllowCredentials();
                     });
             });
+            
             services.AddSignalR();
             services.AddTransient<ChatHub>();
             services.AddTransient<GameHub>();
@@ -72,11 +88,12 @@ namespace MultiMinesweeper
             
             app.UseCors("AllowOrigin");
             
+            app.UseAuthentication();
+            
             app.UseSignalR(hubRouteBuilder => {
                 hubRouteBuilder.MapHub<ChatHub>("/chat");
                 hubRouteBuilder.MapHub<GameHub>("/game");
             });
-
             
             app.UseHttpsRedirection();
             app.UseStaticFiles();
@@ -86,7 +103,7 @@ namespace MultiMinesweeper
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "{controller=GameLogic}");
+                    template: "{controller=Auth}/{action=Index}");
             });
         }
     }

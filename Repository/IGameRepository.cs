@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
  
- namespace MultiMinesweeper
+ namespace MultiMinesweeper.Repository
  {
      public interface IGameRepository
      {
-         List<Game> Games { get; }
+//         Dictionary<string, Game> Games { get; }
      }
  }

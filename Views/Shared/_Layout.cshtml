@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="/lib/bootstrap-4.4.1-dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="/lib/bootstrap-4.4.1-dist/css/bootstrap-grid.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <link href="/css/font.css" rel="stylesheet">
+    @RenderSection("LibStyles", false)
+    
+    @RenderSection("Styles", false)
+    <style>
+    </style>
+</head>
+<body>
+@RenderBody()
+
+<script src="/lib/jquery/js/jquery-3.3.1.min.js"></script>
+<script src="/lib/bootstrap-4.4.1-dist/js/bootstrap.min.js"></script>
+
+@RenderSection("LibScripts", false)
+
+@RenderSection("Scripts", false)
+
+</body>
+</html>

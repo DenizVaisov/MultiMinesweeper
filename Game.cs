@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using MultiMinesweeper.Model;
 
 namespace MultiMinesweeper
 {
@@ -47,10 +48,12 @@ namespace MultiMinesweeper
             if (CurrentPlayer == Player1)
             {
                 CurrentPlayer = Player2;
+                Console.WriteLine($"Current player is {CurrentPlayer}");
             }
             else
             {
                 CurrentPlayer = Player1;
+                Console.WriteLine($"Current player is {CurrentPlayer}");
             }
         }
         
