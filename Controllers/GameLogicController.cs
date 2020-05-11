@@ -19,7 +19,7 @@ namespace MultiMinesweeper.Controllers
         public JsonResult GameField()
         {
             Game game = new Game();
-            return Json(game.InitialiazeGameField());
+            return Json(game.InitialiazeOwnField());
         }
 
         [Route("GameLogic/FromClient")]

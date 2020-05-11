@@ -66,7 +66,7 @@ namespace MultiMinesweeper
             });
             
             services.AddSignalR();
-            services.AddTransient<ChatHub>();
+            services.AddTransient<LobbyHub>();
             services.AddTransient<GameHub>();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
            
@@ -91,7 +91,7 @@ namespace MultiMinesweeper
             app.UseAuthentication();
             
             app.UseSignalR(hubRouteBuilder => {
-                hubRouteBuilder.MapHub<ChatHub>("/chat");
+                hubRouteBuilder.MapHub<LobbyHub>("/chat");
                 hubRouteBuilder.MapHub<GameHub>("/game");
             });
             
