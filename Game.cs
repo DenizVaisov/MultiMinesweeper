@@ -13,9 +13,10 @@ namespace MultiMinesweeper
         public Player CurrentPlayer { get; set; }
         public const int NumberOfRows = 16;
         
-        public GameField[][] OwnField;
-        public GameField[][] EnemyField;
+        public GameField[][] Field1;
+        public GameField[][] Field2;
         
+        public bool Prepare { get; set; }
         public bool InProgress { get; set; }
         public Game()
         {
@@ -68,37 +69,36 @@ namespace MultiMinesweeper
         
         public GameField[][] InitialiazeOwnField()
         {
-            OwnField = new GameField[NumberOfRows][];
+            Field1 = new GameField[NumberOfRows][];
             
             for (int i = 0; i < NumberOfRows; i++)
-                OwnField[i] = new GameField[NumberOfRows];
+                Field1[i] = new GameField[NumberOfRows];
             
-            return OwnField;
+            return Field1;
         }
         
         public GameField[][] InitialiazeEnemyField()
         {
-            EnemyField = new GameField[NumberOfRows][];
+            Field2 = new GameField[NumberOfRows][];
             
             for (int i = 0; i < NumberOfRows; i++)
-                OwnField[i] = new GameField[NumberOfRows];
+                Field2[i] = new GameField[NumberOfRows];
             
-            return EnemyField;
+            return Field2;
         }
 
-        public GameField[][] OpenCell(int row, int cell)
+        public GameField[][] OpenCell(int row, int cell, GameField[][] Field)
         {
-            OwnField[row][cell].ClickedCell = true;
+            Field[row][cell].ClickedCell = true;
 
-            if (OwnField[row][cell].Merged)
+            if (Field[row][cell].Merged)
             {
-                return OwnField;
+                return Field;
             }
 
-            return OwnField;
+            return Field;
         }
-
-        public GameField[][] CountMines(int row, int cell)
+        public GameField[][] CountMines(int row, int cell, GameField[][] Field)
         {
             if (row == 0 && cell != 0)
             {
@@ -106,8 +106,8 @@ namespace MultiMinesweeper
                 {
                     for (int y = 0; y < 1; y++)
                     {
-                        if (OwnField[row + x][cell + y].MinedCell)
-                            OwnField[row][cell].NeighbourCells++;
+                        if (Field[row + x][cell + y].MinedCell)
+                            Field[row][cell].NeighbourCells++;
                     }
                 }
             }
@@ -117,18 +117,18 @@ namespace MultiMinesweeper
                 {
                     for (int y = 0; y < 2; y++)
                     {
-                        if (OwnField[row][cell].MinedCell)
-                            OwnField[row+x][cell].NeighbourCells++;
+                        if (Field[row][cell].MinedCell)
+                            Field[row+x][cell].NeighbourCells++;
                     }
                 }
             }
             else if (row == 0 && cell == NumberOfRows)
             {
-                if (OwnField[row][cell].MinedCell)
+                if (Field[row][cell].MinedCell)
                 {
-                    OwnField[row][cell-1].NeighbourCells++;
-                    OwnField[row+1][cell].NeighbourCells++;
-                    OwnField[row+1][cell-1].NeighbourCells++;
+                    Field[row][cell-1].NeighbourCells++;
+                    Field[row+1][cell].NeighbourCells++;
+                    Field[row+1][cell-1].NeighbourCells++;
                 }
 //                for (int x = 0; x < 1; x++)
 //                {
@@ -145,37 +145,53 @@ namespace MultiMinesweeper
                 {
                     for (int y = -1; y < 2; y++)
                     {
-                        if (OwnField[row + x][cell + y].MinedCell)
-                            OwnField[row][cell].NeighbourCells++;
+                        if (Field[row + x][cell + y].MinedCell)
+                            Field[row][cell].NeighbourCells++;
                     }
                 }
             }
 
-            return OwnField;
+            return Field;
+        }
+        public GameField[][] ClearNeighbour(int row, int cell, GameField[][] Field)
+        {
+            Field[row][cell].NeighbourCells = 0;
+
+            return Field;
         }
 
-        public GameField[][] ClearNeighbour(int row, int cell)
+        public GameField[][] PlaceMines(int row, int cell, GameField[][] Field)
         {
-            OwnField[row][cell].NeighbourCells = 0;
-
-            return OwnField;
-        }
-
-        public GameField[][] PlaceMines(int row, int cell)
-        {
-            OwnField[row][cell].MinedCell = true;
-            OwnField[row][cell].ClickedCell = true;
+            Field[row][cell].MinedCell = true;
+            Field[row][cell].ClickedCell = true;
             
-            return OwnField;
+            return Field;
+        }
+        
+        public bool IsWin(GameField[][] Field)
+        {
+            int clickedCellCounter = 0;
+            for (int i = 0; i < NumberOfRows; i++)
+            {
+                for (int j = 0; j < NumberOfRows; j++)
+                {
+                    if (!Field[i][j].ClickedCell) continue;
+                    clickedCellCounter++;
+                    if (clickedCellCounter == NumberOfRows * NumberOfRows)
+                        return true;
+                }
+            }
+
+            return false;
         }
 
-        public GameField[][] PlaceFlags(int row, int cell)
+        public GameField[][] PlaceFlags(int row, int cell, GameField[][] Field)
         {
-            OwnField[row][cell].Merged = true;
-            OwnField[row][cell].MinedCell = false;
-            OwnField[row][cell].ClickedCell = true;
+            Field[row][cell].Merged = true;
+            Field[row][cell].MinedCell = false;
+            Field[row][cell].ClickedCell = true;
 
-            return OwnField;
+            return Field;
         }
     }
 }

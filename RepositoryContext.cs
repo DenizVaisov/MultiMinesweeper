@@ -12,9 +12,8 @@ namespace MultiMinesweeper
         {
         }
         
-//        public DbSet<GameSession> GameSessions { get; set; }
         public DbSet<User> Users { get; set; }
-        
+        public DbSet<HighScores> HighScores { get; set; }
         public DbSet<News> Newses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

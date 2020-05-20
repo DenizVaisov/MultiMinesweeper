@@ -15,6 +15,12 @@ namespace MultiMinesweeper.Controllers
     using Microsoft.AspNetCore.Mvc; 
     public class GameLogicController : Controller
     {
+        private readonly RepositoryContext _repositoryContext;
+        public GameLogicController(RepositoryContext repositoryContext)
+        {
+            _repositoryContext = repositoryContext;
+        }
+        
         [Route("GameLogic/GameField")]
         public JsonResult GameField()
         {
@@ -42,6 +48,23 @@ namespace MultiMinesweeper.Controllers
             }
 
             return Json(str);
+        }
+
+        [HttpPost]
+        [Route("GameLogic/GameResult")]
+        public async Task GameResult([FromBody] HighScores highScores)
+        {
+            _repositoryContext.HighScores.Add(new HighScores
+            {
+                Id = Guid.NewGuid(),
+                Points = highScores.Points,
+                PlusRating = highScores.PlusRating,
+                MinusRating = highScores.MinusRating,
+                Win = highScores.Win,
+                Lose = highScores.Lose
+            });
+
+            await _repositoryContext.SaveChangesAsync();
         }
 
         [HttpPost]
