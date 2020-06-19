@@ -18,14 +18,7 @@ namespace MultiMinesweeper
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-//            var converter = new ValueConverter<BigInteger, long>(    
-//                model => (long)model,
-//                provider => new BigInteger(provider));
-//
-//            modelBuilder
-//                .Entity<User>()
-//                .Property(e => e.Id)
-//                .HasConversion(converter);
+
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures.Internal;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using MultiMinesweeper.Model;
@@ -34,14 +35,15 @@ namespace MultiMinesweeper.Controllers
         [Route("Lobby/Identity")]
         public JsonResult Identity()
         {
-           var efQuery = _context.Users.Where(l => l.Email == User.Identity.Name).Select(l => l.Email).SingleOrDefault();
-           User user = new User{Email = efQuery};
-           Console.WriteLine(user.Email);
-
-            Console.WriteLine(User.Identity.Name);
-            
+           var efQuery = _context.Users.Where(l => l.Login == User.Identity.Name).Select(l => l.Points ).SingleOrDefault();
+//           User user = new User{Login = efQuery};
+//           Console.WriteLine(user.Login);
+//
+//            Console.WriteLine(User.Identity.Name);
+//            
             JObject player = new JObject(
-                new JProperty("player", User.Identity.Name));
+                new JProperty("player", User.Identity.Name),
+                new JProperty("points", efQuery));
 
             return Json(player);
         }

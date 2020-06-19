@@ -33,7 +33,6 @@ namespace MultiMinesweeper
         {
             string postgresConnection =  Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<RepositoryContext>(options => options.UseNpgsql(postgresConnection));
-//            services.AddSingleton<IGameRepository>(new GameRepository());
             services.AddSingleton(new Random());
             
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

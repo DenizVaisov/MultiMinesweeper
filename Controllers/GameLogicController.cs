@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using MultiMinesweeper.Hub;
 using MultiMinesweeper.Model;
 using MultiMinesweeper.Repository;
@@ -28,28 +29,6 @@ namespace MultiMinesweeper.Controllers
             return Json(game.InitialiazeOwnField());
         }
 
-        [Route("GameLogic/FromClient")]
-        public JsonResult FromClient()
-        {
-            List<object> mineFields = new List<object>();
-            string str = null;
-            try
-            {
-                string writePath = @"C:\С#_projects\MultiMinesweeper\MultiMinesweeper\json\file.json";
-                using (StreamReader streamReader = new StreamReader(writePath))
-                {
-                    str = streamReader.ReadToEnd();
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
-
-            return Json(str);
-        }
-
         [HttpPost]
         [Route("GameLogic/GameResult")]
         public async Task GameResult([FromBody] HighScores highScores)
@@ -65,39 +44,23 @@ namespace MultiMinesweeper.Controllers
             });
 
             await _repositoryContext.SaveChangesAsync();
-        }
 
-        [HttpPost]
-        [Route("GameLogic/ClickedCell")]
-        public JsonResult ClickedCell([FromBody] MineField mineField)
-        {
-            List<object> rows = new List<object>();
-            List<object> cols = new List<object>();
+            var query = await _repositoryContext.Users.FirstOrDefaultAsync(item => item.Login == highScores.Win); 
             
-            rows.Add(mineField.Rows);
-            cols.Add(mineField.Columns);
-            
-            
-            string writePath = @"C:\С#_projects\MultiMinesweeper\MultiMinesweeper\json\file.json";
-           
-            
-            JObject mf = new JObject(
-                new JProperty("Columns", mineField.Columns),
-                new JProperty("Rows", mineField.Rows));
-            try
+            if (query != null)
             {
-                using (StreamWriter streamWriter = new StreamWriter(writePath, false, System.Text.Encoding.Default))
-                {
-                   streamWriter.Write(mf);
-                }
+                query.Points = highScores.PlusRating;
+                _repositoryContext.Users.Update(query);
+                _repositoryContext.SaveChanges();
             }
-            catch (Exception exception)
+            
+            var _query = await _repositoryContext.Users.FirstOrDefaultAsync(item => item.Login == highScores.Lose);
+            if (_query != null)
             {
-                Console.WriteLine(exception);
-                throw;
+                _query.Points = highScores.MinusRating;
+                _repositoryContext.Users.Update(_query);
+                _repositoryContext.SaveChanges();
             }
-
-            return Json(mf);
         }
     }
 }

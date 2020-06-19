@@ -12,11 +12,11 @@ namespace MultiMinesweeper.Model
         [Column("id")]
         public long Id { get; set; }
         
-        [Column("email")]
-        public string Email { get; set; }
+        [Column("login")]
+        public string Login { get; set; }
         
-        [Column("name")]
-        public string Name { get; set; }
+        [Column("points")]
+        public double Points { get; set; }
         
         [Column("password")]
         public string Password { get; set; }

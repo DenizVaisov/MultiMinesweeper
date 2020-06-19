@@ -5,9 +5,8 @@ namespace MultiMinesweeper
 {
     public interface IGameClient
     {
-        Task GameFields(GameField[][] mineField1, GameField[][] mineField2);
-        Task OwnField(GameField[][] mineField1);
-        Task ShowField(GameField[][] mineField1);
+        Task OwnField(GameField[][] mineField);
+        Task ShowField(GameField[][] mineField);
         Task HintField(GameField[][] mineField);
         Task HideEnemyMines();
         Task EnemyField(GameField[][] mineField);
@@ -17,8 +16,14 @@ namespace MultiMinesweeper
         Task Players(Player player1, Player player2);
         Task Points(int player1, int player);
         Task Lose();
-        Task Win(Player winner, Player loser);
+        Task GameOver(Player win, Player lose);
+        Task MinesPlaced(int minesPlaced);
+        Task MinesAllowed(int minesCount);
         Task Status(Player player);
+        Task TimeIsUp();
+        Task Win();
+        Task StopTimer();
+        Task TimeIsRacing();
         Task YourTurn();
         Task Timeout();
         Task NotYourTurn();

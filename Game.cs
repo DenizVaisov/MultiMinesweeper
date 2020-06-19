@@ -9,12 +9,13 @@ namespace MultiMinesweeper
         public string Id { get; set; }
         public Player Player1 { get; private set; }
         public Player Player2 { get; private set; }
-        public Player Player { get; set; }
         public Player CurrentPlayer { get; set; }
         public const int NumberOfRows = 16;
+        public int FirstPlayerMineCounter { get; set; }
+        public int SecondPlayerMineCounter { get; set; }
         
         public GameField[][] Field1;
-        public GameField[][] Field2;
+        public GameField[][] Field2; 
         
         public bool Prepare { get; set; }
         public bool InProgress { get; set; }
@@ -100,44 +101,82 @@ namespace MultiMinesweeper
         }
         public GameField[][] CountMines(int row, int cell, GameField[][] Field)
         {
-            if (row == 0 && cell != 0)
+            if (row > 0 && cell == 0)
             {
-                for (int x = 0; x < 1; x++)
+                for (int x = -1; x < 2; x++)
                 {
                     for (int y = 0; y < 1; y++)
                     {
-                        if (Field[row + x][cell + y].MinedCell)
+                        if (Field[row][cell+1].MinedCell)
                             Field[row][cell].NeighbourCells++;
-                    }
+                    } 
                 }
+            }
+            else if (row > 0 && cell == NumberOfRows-1)
+            {
+                for (int x = -1; x < 2; x++)
+                {
+                    for (int y = 0; y < 1; y++)
+                    {
+                        if (Field[row][cell-1].MinedCell)
+                            Field[row][cell].NeighbourCells++;
+                    } 
+                }
+            }
+            else if (row == NumberOfRows-1 && cell > 0)
+            {
+                for (int x = -1; x < 2; x++)
+                {
+                    for (int y = 0; y < 1; y++)
+                    {
+                        if (Field[row-1][cell].MinedCell)
+                            Field[row][cell].NeighbourCells++;
+                    } 
+                }
+            }
+            else if (row == 0 && cell > 0)
+            {
+                for (int x = -1; x < 2; x++)
+                {
+                    for (int y = 0; y < 1; y++)
+                    {
+                        if (Field[row+1][cell].MinedCell)
+                            Field[row][cell].NeighbourCells++;
+                    } 
+                }
+            }
+            else if (row == NumberOfRows-1 && cell == 0)
+            {
+                if (Field[row-1][cell+1].MinedCell)
+                    Field[row][cell].NeighbourCells++;
+                
+                if (Field[row-1][cell].MinedCell)
+                    Field[row][cell].NeighbourCells++;
+                
+                if (Field[row][cell+1].MinedCell)
+                    Field[row][cell].NeighbourCells++;
+            }
+            else if(row == NumberOfRows-1 && cell == NumberOfRows-1)
+            {
+                if (Field[row-1][cell].MinedCell)
+                    Field[row][cell].NeighbourCells++;
+                
+                if (Field[row-1][cell-1].MinedCell)
+                    Field[row][cell].NeighbourCells++;
+                
+                if (Field[row][cell-1].MinedCell)
+                    Field[row][cell].NeighbourCells++;
             }
             else if (row == 0 && cell == 0)
             {
-                for (int x = 0; x < 2; x++)
-                {
-                    for (int y = 0; y < 2; y++)
-                    {
-                        if (Field[row][cell].MinedCell)
-                            Field[row+x][cell].NeighbourCells++;
-                    }
-                }
-            }
-            else if (row == 0 && cell == NumberOfRows)
-            {
-                if (Field[row][cell].MinedCell)
-                {
-                    Field[row][cell-1].NeighbourCells++;
-                    Field[row+1][cell].NeighbourCells++;
-                    Field[row+1][cell-1].NeighbourCells++;
-                }
-//                for (int x = 0; x < 1; x++)
-//                {
-//                    for (int y = -2; y < 0; y++)
-//                    {
-//                        if (GameField[row + x][cell + y].MinedCell)
-//                            GameField[row][cell].NeighbourCells++;
-//                    }
-//                }
+                if (Field[row][cell+1].MinedCell)
+                    Field[row][cell].NeighbourCells++;
+                
+                if (Field[row+1][cell].MinedCell)
+                    Field[row][cell].NeighbourCells++;
+                
+                if (Field[row+1][cell+1].MinedCell)
+                    Field[row][cell].NeighbourCells++;
             }
             else
             {

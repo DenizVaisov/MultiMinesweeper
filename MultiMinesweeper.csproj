@@ -21,4 +21,21 @@
         <PackageReference Include="WebSocketManager" Version="1.0.1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="MultiMinesweeper.UnitTesting\obj\MultiMinesweeper.UnitTesting.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="MultiMinesweeper.UnitTesting\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="MultiMinesweeper.UnitTesting\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="MultiMinesweeper.Tests\obj\MultiMinesweeper.Tests.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="MultiMinesweeper.Tests\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="MultiMinesweeper.Tests\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="MultiMinesweeper.UnitTests\bin\Debug\netcoreapp2.1\MultiMinesweeper.UnitTests.deps.json" />
+      <_ContentIncludedByDefault Remove="MultiMinesweeper.UnitTests\bin\Debug\netcoreapp2.1\MultiMinesweeper.UnitTests.runtimeconfig.dev.json" />
+      <_ContentIncludedByDefault Remove="MultiMinesweeper.UnitTests\bin\Debug\netcoreapp2.1\MultiMinesweeper.UnitTests.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="MultiMinesweeper.UnitTests\obj\MultiMinesweeper.UnitTests.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="MultiMinesweeper.UnitTests\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="MultiMinesweeper.UnitTests\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="json\file.json" />
+      <_ContentIncludedByDefault Remove="json\player.json" />
+    </ItemGroup>
+
 </Project>

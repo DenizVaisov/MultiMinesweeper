@@ -14,32 +14,12 @@ using Newtonsoft.Json.Linq;
 
 namespace MultiMinesweeper.Controllers
 {
-    public class AuthController : Microsoft.AspNetCore.Mvc.Controller
+    public class AuthController : Controller
     {
         private readonly RepositoryContext _context;
         public AuthController(RepositoryContext context)
         {
             _context = context;
-        }
-        
-        public void LoggedUser(string player)
-        {
-            string writePath = @"C:\С#_projects\MultiMinesweeper\MultiMinesweeper\json\player.json";
-
-            JObject mf = new JObject(
-                new JProperty("player", player));
-            try
-            {
-                using (StreamWriter streamWriter = new StreamWriter(writePath, false, System.Text.Encoding.Default))
-                {
-                    streamWriter.Write(mf);
-                }
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine(exception);
-                throw;
-            }
         }
         
         public ActionResult Index()
@@ -59,11 +39,11 @@ namespace MultiMinesweeper.Controllers
         {
             if (ModelState.IsValid)
             {
-                User user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Login && u.Password == model.Password);
+                User user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Login == model.Login && u.Password == model.Password);
                 if (user != null)
                 {
                     await Authenticate(model.Login);
-                    LoggedUser(model.Login);
                     return RedirectPermanent("http://localhost:8080/");
                 }
                 return View(new SignIn{ Message = "Пользователя с таким логином или паролем нет", Login = model.Login});
@@ -77,26 +57,25 @@ namespace MultiMinesweeper.Controllers
             return View(new Register{ Message = "" });
         }
 
+		[Route("Auth/Register")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(Register model)
         {
             if (ModelState.IsValid)
             {
-                User user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Login && u.Password == model.Password);
-                
+                User user = await _context.Users.
+                    FirstOrDefaultAsync(u => u.Login == model.Login && u.Password == model.Password);
                 if (user == null)
                 {
-                    _context.Users.Add(new User { Email = model.Login, Password = model.Password });
+                    _context.Users.Add(new User { Login = model.Login, Password = model.Password, Points = 0});
                     await _context.SaveChangesAsync();
- 
                     await Authenticate(model.Login); 
  
                     return RedirectToAction("Index", "Auth");
                 }
                 return View(new Register{ Message = "Данный пользователь уже зарегистрирован", Login = model.Login});
             }
-
             return View(model);
         }
 
@@ -106,7 +85,8 @@ namespace MultiMinesweeper.Controllers
             {
                 new Claim(ClaimsIdentity.DefaultNameClaimType, userName)
             };
-            ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
+            ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", 
+                ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
         }
 
