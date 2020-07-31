@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using MultiMinesweeper.Model;
 
@@ -9,10 +10,15 @@ namespace MultiMinesweeper
         public string Id { get; set; }
         public Player Player1 { get; private set; }
         public Player Player2 { get; private set; }
+        public Player ReconnectedPlayer { get; set; }
         public Player CurrentPlayer { get; set; }
-        public const int NumberOfRows = 16;
+        private const int NumberOfRows = 16;
         public int FirstPlayerMineCounter { get; set; }
         public int SecondPlayerMineCounter { get; set; }
+        public int FirstPlayerFlagCounter { get; set; }
+        public int SecondPlayerFlagCounter { get; set; }
+        public int FirstPlayerCellClicked { get; set; }
+        public int SecondPlayerCellClicked { get; set; }
         
         public GameField[][] Field1;
         public GameField[][] Field2; 
@@ -28,19 +34,6 @@ namespace MultiMinesweeper
             CurrentPlayer = new Player();
         }
 
-        public Player GetPlayer(string connectionId)
-        {
-            if (Player1 != null && Player1.ConnectionId == connectionId)
-            {
-                return Player1;
-            }
-            if (Player2 != null && Player2.ConnectionId == connectionId)
-            {
-                return Player2;
-            }
-            return null;
-        }
-        
         public void NextPlayer()
         {
             if (CurrentPlayer == Player1)
@@ -62,6 +55,19 @@ namespace MultiMinesweeper
                 return true;
             }
             if (Player2 != null && Player2.ConnectionId == connectionId)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public bool HasPlayerId(long id)
+        {
+            if (Player1 != null && Player1.PlayerId == id)
+            {
+                return true;
+            }
+            if (Player2 != null && Player2.PlayerId == id)
             {
                 return true;
             }
@@ -91,11 +97,12 @@ namespace MultiMinesweeper
         public GameField[][] OpenCell(int row, int cell, GameField[][] Field)
         {
             Field[row][cell].ClickedCell = true;
+            
+            if(!Field[row][cell].MinedCell)
+                Field[row][cell].NumberCell = true;
 
             if (Field[row][cell].Merged)
-            {
                 return Field;
-            }
 
             return Field;
         }
@@ -192,13 +199,6 @@ namespace MultiMinesweeper
 
             return Field;
         }
-        public GameField[][] ClearNeighbour(int row, int cell, GameField[][] Field)
-        {
-            Field[row][cell].NeighbourCells = 0;
-
-            return Field;
-        }
-
         public GameField[][] PlaceMines(int row, int cell, GameField[][] Field)
         {
             Field[row][cell].MinedCell = true;
@@ -207,15 +207,12 @@ namespace MultiMinesweeper
             return Field;
         }
         
-        public bool IsWin(GameField[][] Field)
+        public bool IsWin(int clickedCellCounter)
         {
-            int clickedCellCounter = 0;
             for (int i = 0; i < NumberOfRows; i++)
             {
                 for (int j = 0; j < NumberOfRows; j++)
                 {
-                    if (!Field[i][j].ClickedCell) continue;
-                    clickedCellCounter++;
                     if (clickedCellCounter == NumberOfRows * NumberOfRows)
                         return true;
                 }

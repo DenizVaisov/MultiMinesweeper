@@ -20,10 +20,5 @@ namespace MultiMinesweeper.Controllers
             var query = _context.Newses.FromSql("SELECT * FROM news").ToList();
             return View(query);
         }
-
-        public IActionResult About()
-        {
-            return View();
-        }
     }
 }

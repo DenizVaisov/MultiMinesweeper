@@ -46,7 +46,7 @@ namespace MultiMinesweeper.Controllers
                     await Authenticate(model.Login);
                     return RedirectPermanent("http://localhost:8080/");
                 }
-                return View(new SignIn{ Message = "Пользователя с таким логином или паролем нет", Login = model.Login});
+                return View(new SignIn{ Message = "Пользователя с таким логином или паролем не найден", Login = model.Login});
             }
             return View(model);
         }
@@ -65,7 +65,7 @@ namespace MultiMinesweeper.Controllers
             if (ModelState.IsValid)
             {
                 User user = await _context.Users.
-                    FirstOrDefaultAsync(u => u.Login == model.Login && u.Password == model.Password);
+                    FirstOrDefaultAsync(u => u.Login == model.Login);
                 if (user == null)
                 {
                     _context.Users.Add(new User { Login = model.Login, Password = model.Password, Points = 0});
@@ -74,7 +74,7 @@ namespace MultiMinesweeper.Controllers
  
                     return RedirectToAction("Index", "Auth");
                 }
-                return View(new Register{ Message = "Данный пользователь уже зарегистрирован", Login = model.Login});
+                return View(new Register{ Message = "Пользователь с таким логином уже зарегистрирован", Login = model.Login});
             }
             return View(model);
         }

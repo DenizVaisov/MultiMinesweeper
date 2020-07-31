@@ -9,7 +9,7 @@ namespace MultiMinesweeper.Model
         [Column("id")]
         public Guid Id { get; set; }
         [Column("points")]
-        public int Points { get; set; }
+        public long Points { get; set; }
         [Column("plus_points")]
         public int PlusRating { get; set; }
         [Column("minus_points")]

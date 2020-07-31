@@ -26,7 +26,7 @@ namespace MultiMinesweeper.Hub
         }
         public async Task CheckPlayers()
         {
-            var players = GameRepository.Players;
+            var players = LobbyRepository.Players;
             await Clients.All.PlayersOnline(players);
         }
 
@@ -34,21 +34,21 @@ namespace MultiMinesweeper.Hub
         {
             var query = _context.Users.Where(l => l.Login == Context.User.Identity.Name).Select(l => l.Points)
                 .SingleOrDefault();
-            GameRepository.ConnectedPlayersRating.Add(new Rating
+            LobbyRepository.ConnectedPlayersRating.Add(new Rating
             {
                 ConnectionId = Context.ConnectionId,
                 Login = Context.User.Identity.Name,
                 Points = query
             });
 
-            if (GameRepository.PlayersConnectionId.Contains(Context.ConnectionId)) return;
+            if (LobbyRepository.PlayersConnectionId.Contains(Context.ConnectionId)) return;
           
-            GameRepository.PlayersConnectionId.Add(Context.ConnectionId);
+            LobbyRepository.PlayersConnectionId.Add(Context.ConnectionId);
 
             Console.WriteLine($"Player {Context.User.Identity.Name} added to ranking");
-            Console.WriteLine($"Players in ranging: {GameRepository.ConnectedPlayersRating.Count}");
+            Console.WriteLine($"Players in ranging: {LobbyRepository.ConnectedPlayersRating.Count}");
 
-            if (GameRepository.PlayersConnectionId.Count > 2)
+            if (LobbyRepository.PlayersConnectionId.Count > 2)
             {
                 try
                 {
@@ -57,30 +57,30 @@ namespace MultiMinesweeper.Hub
                     {
                         i--;
                         Console.WriteLine("Finding players");
-                        foreach (var item in GameRepository.ConnectedPlayersRating)
+                        foreach (var item in LobbyRepository.ConnectedPlayersRating)
                             Console.WriteLine($"Player: {Context.User.Identity.Name}, points: {item.Points}");
                         
-                        if (GameRepository.PlayersConnectionId.Count == 2)
+                        if (LobbyRepository.PlayersConnectionId.Count == 2)
                         {
-                            foreach (var item in GameRepository.ConnectedPlayersRating)
+                            foreach (var item in LobbyRepository.ConnectedPlayersRating)
                                 Console.WriteLine($"Player: {Context.User.Identity.Name}, points: {item.Points}");
                             Console.WriteLine("In game");
-                            await Clients.Clients(GameRepository.PlayersConnectionId).ToTheGame();
-                            GameRepository.PlayersConnectionId.Remove(Context.ConnectionId);
+                            await Clients.Clients(LobbyRepository.PlayersConnectionId).ToTheGame();
+                            LobbyRepository.PlayersConnectionId.Remove(Context.ConnectionId);
 
                             await CheckPlayers();
                         }
 
-                        var player = GameRepository.ConnectedPlayersRating.FirstOrDefault(x => x.Points > query);
+                        var player = LobbyRepository.ConnectedPlayersRating.FirstOrDefault(x => x.Points > query);
 
                         Console.WriteLine(player?.Login + " " + player?.Points);
                         if (player != null)
                         {
-                            GameRepository.PlayersConnectionId.Remove(player.ConnectionId);
+                            LobbyRepository.PlayersConnectionId.Remove(player.ConnectionId);
                         }
 
                         await CheckPlayers();
-                        Console.WriteLine($"Players in ranging {GameRepository.ConnectedPlayersRating.Count}");
+                        Console.WriteLine($"Players in ranging {LobbyRepository.ConnectedPlayersRating.Count}");
                     }
                 }
                 catch (Exception e)
@@ -92,12 +92,12 @@ namespace MultiMinesweeper.Hub
 
             else
             {
-                if (GameRepository.ConnectedPlayersRating.Count == 2 && GameRepository.PlayersConnectionId.Count == 2)
+                if (LobbyRepository.ConnectedPlayersRating.Count == 2 && LobbyRepository.PlayersConnectionId.Count == 2)
                 {
                     try
                     {
-                        var firstPlayer = GameRepository.ConnectedPlayersRating[0];
-                        var secondPlayer = GameRepository.ConnectedPlayersRating[1];
+                        var firstPlayer = LobbyRepository.ConnectedPlayersRating[0];
+                        var secondPlayer = LobbyRepository.ConnectedPlayersRating[1];
 
                         Console.WriteLine(firstPlayer);
                         Console.WriteLine(secondPlayer);
@@ -105,8 +105,8 @@ namespace MultiMinesweeper.Hub
                         if (firstPlayer.Points >= secondPlayer.Points * 0.1 * _random.Next(8, 10)
                             && secondPlayer.Points >= firstPlayer.Points * 0.1 * _random.Next(8, 10))
                         {
-                            Console.WriteLine($"Players connected: {GameRepository.ConnectedPlayersRating.Count}");
-                            await Clients.Clients(GameRepository.PlayersConnectionId).ToTheGame();
+                            Console.WriteLine($"Players connected: {LobbyRepository.ConnectedPlayersRating.Count}");
+                            await Clients.Clients(LobbyRepository.PlayersConnectionId).ToTheGame();
                             await CheckPlayers();
                         }
 
@@ -122,28 +122,28 @@ namespace MultiMinesweeper.Hub
 
         public override async Task OnConnectedAsync()
         {
-            GameRepository.Players.Enqueue(Context.ConnectionId);
-            foreach (var item in GameRepository.Players)
+            LobbyRepository.Players.Enqueue(Context.ConnectionId);
+            foreach (var item in LobbyRepository.Players)
             {
                 Console.WriteLine($"{item} in queue");
             }
             Console.WriteLine("ChatHub hub connected");
-            await Clients.All.PlayersOnline(GameRepository.Players);
+            await Clients.All.PlayersOnline(LobbyRepository.Players);
             await CheckPlayers();
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            GameRepository.Players.Dequeue();
-            foreach (var item in GameRepository.Players)
+            LobbyRepository.Players.Dequeue();
+            foreach (var item in LobbyRepository.Players)
             {
                 Console.WriteLine($"{item} dequeue");
             }
             Console.WriteLine("ChatHub hub disconnected");
-            await Clients.All.PlayersOnline(GameRepository.Players); 
-            GameRepository.PlayersConnectionId.Remove(Context.ConnectionId);
-            GameRepository.ConnectedPlayersRating.RemoveAll(player => player.ConnectionId == Context.ConnectionId);
+            await Clients.All.PlayersOnline(LobbyRepository.Players); 
+            LobbyRepository.PlayersConnectionId.Remove(Context.ConnectionId);
+            LobbyRepository.ConnectedPlayersRating.RemoveAll(player => player.ConnectionId == Context.ConnectionId);
             await base.OnDisconnectedAsync(exception);
         }
     }

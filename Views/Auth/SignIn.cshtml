@@ -7,24 +7,26 @@
 
 @section Styles
 {
+    
 }
 
 @section LibStyles
 {
+    
 }
 
 @section Scripts
 {
     <script type="text/javascript">
- 
+        var regButton = document.getElementById('reg');
     </script>
 }
 
 
-<div id="sigin-form" class="container-fluid">
+<div class="container-fluid">
     <div class="row">
-        <div class="offset-4 col-md-4">
-            <div>
+        <div class="offset-sm-4 offset-3 col-md-4 col-6">
+            <div style="margin-top: 25%">
                 <form method="post" action="@Url.Action("SignIn", "Auth")">
                     @Html.AntiForgeryToken()
                     <h3 align="center">Авторизация</h3>
@@ -35,11 +37,11 @@
                         <input placeholder="Пароль" id="password" class="form-control mb-3" type="password" name="Password" required>
                     </div>
                     <div class="form-group">
-                        <button type="submit" id="btn" class="btn btn-outline-primary  btn-block">Войти</button>
+                        <button type="submit" id="btn" class="btn btn-outline-success  btn-block">Войти</button>
                     </div>
                     <div class="form-group">
-                        <a href="@Url.Action("Register", "Auth")">Регистрация</a>
-                        <a class="offset-7" href="@Url.Action("Index", "Home")">Новости</a>
+                        <a id="reg" style="" class="btn btn-outline-primary" href="@Url.Action("Register", "Auth")">Регистрация</a>
+                        <a class="btn btn-outline-info offset-sm-2 offset-md-5" href="@Url.Action("Index", "Home")">Новости</a>
                     </div>
                 </form>
                 <p class="text-danger" >@Model.Message</p>

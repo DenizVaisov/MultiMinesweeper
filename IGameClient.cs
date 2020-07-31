@@ -12,16 +12,15 @@ namespace MultiMinesweeper
         Task EnemyField(GameField[][] mineField);
         Task PrepareRound();
         Task PlayerTurn(Player player);
-        Task RollCall(Player player1, Player player2);
+        Task CompetitiveStage();
         Task Players(Player player1, Player player2);
-        Task Points(int player1, int player);
+        Task Points(int player1, int player2);
         Task Lose();
         Task GameOver(Player win, Player lose);
         Task MinesPlaced(int minesPlaced);
         Task MinesAllowed(int minesCount);
+        Task Mined();
         Task Status(Player player);
-        Task TimeIsUp();
-        Task Win();
         Task StopTimer();
         Task TimeIsRacing();
         Task YourTurn();
@@ -29,5 +28,7 @@ namespace MultiMinesweeper
         Task NotYourTurn();
         Task ReceiveMessage(string player, string message);
         Task Concede();
+        Task Reconnect(Player player, GameField[][] ownField, GameField[][] enemyField);
+        Task ToLobby();
     }
 }

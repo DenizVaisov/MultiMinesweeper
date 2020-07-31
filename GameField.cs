@@ -7,5 +7,6 @@
         public int NeighbourCells { get; set; }
         public bool MinedCell { get; set; }
         public bool Kaboom { get; set; }
+        public bool NumberCell { get; set; }
     }
 }

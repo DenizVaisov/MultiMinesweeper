@@ -30,17 +30,23 @@ namespace MultiMinesweeper.Controllers
             return Json(efQuery);
         }
         
+        [HttpGet]
+        [Route("Lobby/Records")]
+        public JsonResult Records()
+        {
+            var efQuery = _context.Records.FromSql("SELECT * FROM records");
+            var sortByRating = efQuery.OrderByDescending(p => p.Points);
+            
+            return Json(sortByRating);
+        }
+        
         [Authorize]
         [HttpGet]
         [Route("Lobby/Identity")]
         public JsonResult Identity()
         {
            var efQuery = _context.Users.Where(l => l.Login == User.Identity.Name).Select(l => l.Points ).SingleOrDefault();
-//           User user = new User{Login = efQuery};
-//           Console.WriteLine(user.Login);
-//
-//            Console.WriteLine(User.Identity.Name);
-//            
+           
             JObject player = new JObject(
                 new JProperty("player", User.Identity.Name),
                 new JProperty("points", efQuery));

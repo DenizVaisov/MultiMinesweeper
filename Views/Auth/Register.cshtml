@@ -6,7 +6,6 @@
 
 @section Styles
 {
-    @* <link href="/styles/auth.css" rel="stylesheet"> *@
 }
 
 @section LibStyles
@@ -20,13 +19,16 @@
            var password = document.getElementById('password');
            var confirmPassword = document.getElementById('password-confirm');
            var confirm = document.getElementById('confirm');
+           var regButton = document.getElementById('reg-btn');
            
            if(password.value !== confirmPassword.value){
             
               confirm.style.cssText = 'display:block';
+              regButton.classList.add('disabled');
            }
            else {
                confirm.style.cssText = 'display:none';
+               regButton.classList.remove('disabled');
            }
          })
     </script>
@@ -34,8 +36,8 @@
 
 <div class="container-fluid">
     <div class="row">
-        <div class="offset-4 col-md-4">
-            <div id="box1" class="auth-form-container">
+        <div class="offset-sm-4 offset-3 col-md-4 col-6">
+            <div style="margin-top: 25%" class="">
                 <form method="post" action="@Url.Action("Register", "Auth")">
                     @Html.AntiForgeryToken()
                     <h3 align="center">Регистрация</h3>
@@ -52,7 +54,7 @@
                         <p class="text-danger">Пароли не совпадают</p>
                     </div>
                     <button type="submit" id="reg-btn" class="btn btn-outline-success btn-block">Зарегистрировать</button>
-                    <a href="@Url.Action("SignIn", "Auth")">Авторизация</a>
+                    <a class="btn btn-outline-primary btn-block" href="@Url.Action("SignIn", "Auth")">Авторизация</a>
                 </form>
                 <p class="text-danger" >@Model.Message</p>
             </div>
