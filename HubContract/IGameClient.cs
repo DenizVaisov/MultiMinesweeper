@@ -1,7 +1,8 @@
 ﻿using System.Threading.Tasks;
+using MultiMinesweeper.Game;
 using MultiMinesweeper.Model;
 
-namespace MultiMinesweeper
+namespace MultiMinesweeper.HubContract
 {
     public interface IGameClient
     {
@@ -27,7 +28,6 @@ namespace MultiMinesweeper
         Task Timeout();
         Task NotYourTurn();
         Task ReceiveMessage(string player, string message);
-        Task Concede();
         Task Reconnect(Player player, GameField[][] ownField, GameField[][] enemyField);
         Task ToLobby();
     }

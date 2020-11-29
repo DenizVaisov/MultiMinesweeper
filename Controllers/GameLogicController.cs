@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using MultiMinesweeper.Hub;
+using MultiMinesweeper.Game;
 using MultiMinesweeper.Model;
-using MultiMinesweeper.Repository;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace MultiMinesweeper.Controllers
 {
@@ -25,7 +18,7 @@ namespace MultiMinesweeper.Controllers
         [Route("GameLogic/GameField")]
         public JsonResult GameField()
         {
-            Game game = new Game();
+            GameLogic game = new GameLogic();
             return Json(game.InitialiazeOwnField());
         }
 
@@ -84,8 +77,7 @@ namespace MultiMinesweeper.Controllers
             }
 
             var _query = await _repositoryContext.Users.FirstOrDefaultAsync(item => item.Login == highScores.Lose);
-            var secondPlayer =
-                await _repositoryContext.Users.FirstOrDefaultAsync(item => item.Login == highScores.Lose);
+            var secondPlayer = await _repositoryContext.Users.FirstOrDefaultAsync(item => item.Login == highScores.Lose);
             
             var _records = await _repositoryContext.Records.FirstOrDefaultAsync(item => item.Login == highScores.Lose);
             if (_records == null)

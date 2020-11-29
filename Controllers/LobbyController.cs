@@ -1,15 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Security.Claims;
+﻿using System.Linq;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ViewFeatures.Internal;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
-using MultiMinesweeper.Model;
 using Newtonsoft.Json.Linq;
 
 namespace MultiMinesweeper.Controllers

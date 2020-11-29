@@ -17,9 +17,7 @@
 
 @section Scripts
 {
-    <script type="text/javascript">
-        var regButton = document.getElementById('reg');
-    </script>
+
 }
 
 
@@ -40,8 +38,8 @@
                         <button type="submit" id="btn" class="btn btn-outline-success  btn-block">Войти</button>
                     </div>
                     <div class="form-group">
-                        <a id="reg" style="" class="btn btn-outline-primary" href="@Url.Action("Register", "Auth")">Регистрация</a>
-                        <a class="btn btn-outline-info offset-sm-2 offset-md-5" href="@Url.Action("Index", "Home")">Новости</a>
+                        <a class="btn btn-outline-primary" href="@Url.Action("Register", "Auth")">Регистрация</a>
+                        <a style="position: absolute; right: 15px" class="btn btn-outline-info" href="@Url.Action("Index", "Home")">Новости</a>
                     </div>
                 </form>
                 <p class="text-danger" >@Model.Message</p>

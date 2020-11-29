@@ -18,17 +18,37 @@
         document.addEventListener('input', function () { 
            var password = document.getElementById('password');
            var confirmPassword = document.getElementById('password-confirm');
-           var confirm = document.getElementById('confirm');
-           var regButton = document.getElementById('reg-btn');
+           var confirm = document.getElementById('confirm-pass');
+           var checkPassRegExp = document.getElementById('check-pass-reg');
            
-           if(password.value !== confirmPassword.value){
-            
-              confirm.style.cssText = 'display:block';
-              regButton.classList.add('disabled');
+           var mediumRegex = new RegExp("^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})");
+           
+           $.fn.extend({
+               disable: function(state) {
+                   return this.each(function() {
+                       this.disabled = state;
+                   });
+               }
+           });
+           
+           if( mediumRegex.test(password.value) ) {
+               checkPassRegExp.style.cssText = 'display:none';
+               $('input[type="submit"], input[type="button"], button').disable(false);
            }
+           
+           else {
+               checkPassRegExp.style.cssText = 'display:block';
+               $('input[type="submit"], input[type="button"], button').disable(true);
+           }
+           
+           if(password.value !== confirmPassword.value) {
+               confirm.style.cssText = 'display:block';
+               $('input[type="submit"], input[type="button"], button').disable(true);
+           }
+           
            else {
                confirm.style.cssText = 'display:none';
-               regButton.classList.remove('disabled');
+               $('input[type="submit"], input[type="button"], button').disable(false);
            }
          })
     </script>
@@ -50,13 +70,16 @@
                     <div class="input-group">
                         <input placeholder="Проверка пароля" id="password-confirm" class="form-control mb-3" type="password" name="Password" required/>
                     </div>
-                    <div id="confirm" style="display: none" class="input-group">
+                    <div id="confirm-pass" style="display: none" class="input-group">
                         <p class="text-danger">Пароли не совпадают</p>
+                    </div>
+                    <div id="check-pass-reg" style="display: none" class="input-group">
+                        <p class="text-danger">Пароль должен быть из шести и более символов, иметь одну строчную или прописную букву английского алфавита</p>
                     </div>
                     <button type="submit" id="reg-btn" class="btn btn-outline-success btn-block">Зарегистрировать</button>
                     <a class="btn btn-outline-primary btn-block" href="@Url.Action("SignIn", "Auth")">Авторизация</a>
                 </form>
-                <p class="text-danger" >@Model.Message</p>
+                <p class="text-danger">@Model.Message</p>
             </div>
         </div>
     </div>

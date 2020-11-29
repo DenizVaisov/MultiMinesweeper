@@ -1,13 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Channels;
+﻿using System.Linq;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
-using MultiMinesweeper.Model;
+using MultiMinesweeper.Game;
+using MultiMinesweeper.HubContract;
 using MultiMinesweeper.Repository;
-using ServiceStack;
 
 namespace MultiMinesweeper.Hub
 {
@@ -32,7 +27,7 @@ namespace MultiMinesweeper.Hub
         public async Task TimeIsUp()
         {
             Console.WriteLine("Time is up");
-            var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId) || g.Value.HasPlayerId(playerID)).Value;
+            var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId)).Value;
             await Clients.Client(game.CurrentPlayer.ConnectionId).StopTimer();
             game.NextPlayer();
             await Clients.Client(game.CurrentPlayer.ConnectionId).TimeIsRacing();
@@ -42,7 +37,7 @@ namespace MultiMinesweeper.Hub
         public async Task CheckTime()
         {
             Console.WriteLine("Invoke CheckTime");
-            var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId) || g.Value.HasPlayerId(playerID)).Value;
+            var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId)).Value;
             
             await TimeIsUp();
 
@@ -65,7 +60,7 @@ namespace MultiMinesweeper.Hub
         public async Task PrepareToBattle(int row, int cell)
         {
             Console.WriteLine(Context.ConnectionId);
-            var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId) || g.Value.HasPlayerId(playerID)).Value;
+            var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId)).Value;
            
             if (game == null) return;
             if (game.Prepare)
@@ -97,18 +92,20 @@ namespace MultiMinesweeper.Hub
 
         public async Task CheckCell(int row, int cell, GameField[][] field)
         {
-            var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId) || g.Value.HasPlayerId(playerID)).Value;
+            var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId)).Value;
             
             if (game == null) return;
             if (game.Prepare) return;
             if (!game.InProgress) return;
             if (field[row][cell].NumberCell) return;
             if (field[row][cell].Merged) return;
+            
             if (field[row][cell].MinedCell)
             {
                 field[row][cell].Kaboom = true;
                 game.CurrentPlayer.Lifes -= 1;
                 field[row][cell].MinedCell = false;
+                
                 await Clients.Client(Context.ConnectionId).Mined();
                 await Clients.Group(game.Id).Points(game.Player1.Points, game.Player2.Points);
                 await Clients.Client(Context.ConnectionId).Status(game.CurrentPlayer);
@@ -139,7 +136,7 @@ namespace MultiMinesweeper.Hub
 
         public async Task OpenCell(int row, int cell)
         {
-            var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId) || g.Value.HasPlayerId(playerID)).Value;
+            var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId)).Value;
             
             if (game == null) return;
             if (!game.InProgress) return;
@@ -238,7 +235,7 @@ namespace MultiMinesweeper.Hub
         }
         public async Task SendMessage(string message)
         {
-            var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId) || g.Value.HasPlayerId(playerID)).Value;
+            var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId)).Value;
             if (game != null)
                 await Clients.Group(game.Id).ReceiveMessage(Context.User.Identity.Name, message);
         }
@@ -279,17 +276,21 @@ namespace MultiMinesweeper.Hub
             
             if (game == null)
             {
-                game = new Game
+                game = new GameLogic()
                 {
                     Id = Guid.NewGuid().ToString(), 
                     Player1 = { ConnectionId = Context.ConnectionId, PlayerId = playerID, 
-                        Name = Context.User.Identity.Name, Lifes = 3, Points = 0 }
+                    Name = Context.User.Identity.Name, Lifes = 3, Points = 0 }
                 };
-				
-				if(game.Player1.PlayerId != playerID)
-				  await Clients.Client(Context.ConnectionId).ToLobby();
                 
                 GameRepository.Games[game.Id] = game;
+
+                var game1 = GameRepository.Games[game.Id] ?? throw new ArgumentNullException();
+                if(game1 == null)
+                    GameRepository.Games[game.Id] = game;
+
+                if(game.Player1.PlayerId != playerID)
+				  await Clients.Client(Context.ConnectionId).ToLobby();
             }
             else
             {

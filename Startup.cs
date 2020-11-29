@@ -1,18 +1,13 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MultiMinesweeper.Game;
 using MultiMinesweeper.Hub;
-using MultiMinesweeper.Repository;
 
 namespace MultiMinesweeper
 {
@@ -33,7 +28,6 @@ namespace MultiMinesweeper
         {
             string postgresConnection =  Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<RepositoryContext>(options => options.UseNpgsql(postgresConnection));
-            services.AddSingleton(new Random());
             
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options => //CookieAuthenticationOptions
@@ -68,7 +62,7 @@ namespace MultiMinesweeper
             services.AddTransient<LobbyHub>();
             services.AddTransient<GameHub>();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-           
+            services.AddScoped<GameLogic>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

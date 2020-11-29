@@ -44,7 +44,7 @@ namespace MultiMinesweeper.Controllers
                 if (user != null)
                 {
                     await Authenticate(model.Login);
-                    return RedirectPermanent("http://localhost:8080/");
+                    return RedirectPermanent("http://192.168.43.159:8080");
                 }
                 return View(new SignIn{ Message = "Пользователя с таким логином или паролем не найден", Login = model.Login});
             }
@@ -85,7 +85,7 @@ namespace MultiMinesweeper.Controllers
             {
                 new Claim(ClaimsIdentity.DefaultNameClaimType, userName)
             };
-            ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", 
+				ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", 
                 ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
         }

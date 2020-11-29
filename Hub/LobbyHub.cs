@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using MultiMinesweeper.HubContract;
 using MultiMinesweeper.Model;
 using MultiMinesweeper.Repository;
 
@@ -12,11 +12,9 @@ namespace MultiMinesweeper.Hub
     [Authorize]
     public class LobbyHub : Hub<ILobbyClient>
     {
-        private readonly Random _random;
         private readonly RepositoryContext _context;
-        public LobbyHub(Random random, RepositoryContext context)
+        public LobbyHub(RepositoryContext context)
         {
-            _random = random;
             _context = context;
         }
         public async Task SendMessage(string user, string message)
@@ -36,13 +34,10 @@ namespace MultiMinesweeper.Hub
                 .SingleOrDefault();
             LobbyRepository.ConnectedPlayersRating.Add(new Rating
             {
-                ConnectionId = Context.ConnectionId,
-                Login = Context.User.Identity.Name,
-                Points = query
+                ConnectionId = Context.ConnectionId, Login = Context.User.Identity.Name, Points = query
             });
 
             if (LobbyRepository.PlayersConnectionId.Contains(Context.ConnectionId)) return;
-          
             LobbyRepository.PlayersConnectionId.Add(Context.ConnectionId);
 
             Console.WriteLine($"Player {Context.User.Identity.Name} added to ranking");
@@ -52,10 +47,9 @@ namespace MultiMinesweeper.Hub
             {
                 try
                 {
-                    int i = 8;
+                    int i = LobbyRepository.PlayersConnectionId.Count * 2;
                     while (i >= 0)
                     {
-                        i--;
                         Console.WriteLine("Finding players");
                         foreach (var item in LobbyRepository.ConnectedPlayersRating)
                             Console.WriteLine($"Player: {Context.User.Identity.Name}, points: {item.Points}");
@@ -73,14 +67,12 @@ namespace MultiMinesweeper.Hub
 
                         var player = LobbyRepository.ConnectedPlayersRating.FirstOrDefault(x => x.Points > query);
 
-                        Console.WriteLine(player?.Login + " " + player?.Points);
                         if (player != null)
-                        {
                             LobbyRepository.PlayersConnectionId.Remove(player.ConnectionId);
-                        }
 
                         await CheckPlayers();
                         Console.WriteLine($"Players in ranging {LobbyRepository.ConnectedPlayersRating.Count}");
+                        i--;
                     }
                 }
                 catch (Exception e)
@@ -99,11 +91,8 @@ namespace MultiMinesweeper.Hub
                         var firstPlayer = LobbyRepository.ConnectedPlayersRating[0];
                         var secondPlayer = LobbyRepository.ConnectedPlayersRating[1];
 
-                        Console.WriteLine(firstPlayer);
-                        Console.WriteLine(secondPlayer);
-
-                        if (firstPlayer.Points >= secondPlayer.Points * 0.1 * _random.Next(8, 10)
-                            && secondPlayer.Points >= firstPlayer.Points * 0.1 * _random.Next(8, 10))
+                        if (firstPlayer.Points >= secondPlayer.Points * 0.1 * 8
+                            || secondPlayer.Points >= firstPlayer.Points * 0.1 * 8)
                         {
                             Console.WriteLine($"Players connected: {LobbyRepository.ConnectedPlayersRating.Count}");
                             await Clients.Clients(LobbyRepository.PlayersConnectionId).ToTheGame();
@@ -115,6 +104,7 @@ namespace MultiMinesweeper.Hub
                     catch (Exception ex)
                     {
                         Console.WriteLine(ex.Message);
+                        throw;
                     }
                 }
             }

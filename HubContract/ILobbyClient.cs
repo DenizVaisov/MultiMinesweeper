@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
- using System.Threading.Tasks;
- using MultiMinesweeper.Model;
- 
- namespace MultiMinesweeper
+using System.Threading.Tasks;
+
+namespace MultiMinesweeper.HubContract
  {
      public interface ILobbyClient
      {

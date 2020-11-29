@@ -17,8 +17,12 @@ namespace MultiMinesweeper
             CreateWebHostBuilder(args).Build().Run();
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
+        {
+            var port = Environment.GetEnvironmentVariable("PORT");
+            return WebHost.CreateDefaultBuilder(args)
+                .UseUrls($"http://*:{port}")
                 .UseStartup<Startup>();
+        }
     }
 }

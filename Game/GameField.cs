@@ -1,4 +1,4 @@
-﻿namespace MultiMinesweeper
+﻿namespace MultiMinesweeper.Game
 {
     public struct GameField
     {
