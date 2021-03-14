@@ -6,6 +6,7 @@ namespace MultiMinesweeper.HubContract
 {
     public interface IGameClient
     {
+        Task PlayersConnectionIds(Player player);
         Task OwnField(GameField[][] mineField);
         Task ShowField(GameField[][] mineField);
         Task HintField(GameField[][] mineField);

@@ -49,26 +49,22 @@ namespace MultiMinesweeper.Game
         public bool HasPlayer(string connectionId)
         {
             if (Player1 != null && Player1.ConnectionId == connectionId)
-            {
                 return true;
-            }
+            
             if (Player2 != null && Player2.ConnectionId == connectionId)
-            {
                 return true;
-            }
+            
             return false;
         }
 
         public bool HasPlayerId(long id)
         {
             if (Player1 != null && Player1.PlayerId == id)
-            {
                 return true;
-            }
+            
             if (Player2 != null && Player2.PlayerId == id)
-            {
                 return true;
-            }
+            
             return false;
         }
         

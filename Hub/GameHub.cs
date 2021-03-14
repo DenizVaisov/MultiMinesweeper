@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using MultiMinesweeper.Game;
 using MultiMinesweeper.HubContract;
+using MultiMinesweeper.Model;
 using MultiMinesweeper.Repository;
 
 namespace MultiMinesweeper.Hub
@@ -30,6 +31,7 @@ namespace MultiMinesweeper.Hub
             var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId)).Value;
             await Clients.Client(game.CurrentPlayer.ConnectionId).StopTimer();
             game.NextPlayer();
+            Console.WriteLine($"Time is racing {game.CurrentPlayer.Name}");
             await Clients.Client(game.CurrentPlayer.ConnectionId).TimeIsRacing();
             await Clients.Client(game.CurrentPlayer.ConnectionId).YourTurn();
         }
@@ -40,12 +42,12 @@ namespace MultiMinesweeper.Hub
             var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId)).Value;
             
             await TimeIsUp();
+//            if (game.Prepare == false) return;
+            game.Prepare = false;
 
-            if (game.Prepare == false) return;
             
             await Clients.Group(game.Id).Points(game.Player1.Points, game.Player2.Points);
             await Clients.Group(game.Id).Status(game.CurrentPlayer);
-            game.Prepare = false;
             await Clients.Client(game.Player1.ConnectionId).ShowField(game.Field1);
             await Clients.Client(game.Player2.ConnectionId).ShowField(game.Field2);
             await Clients.Client(game.Player1.ConnectionId).EnemyField(game.Field2);
@@ -266,63 +268,87 @@ namespace MultiMinesweeper.Hub
         }
         public override async Task OnConnectedAsync()
         {
-            var existedGame = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayerId(playerID)).Value;
-            if (existedGame != null)
-                await Reconnect();
-			
-            Console.WriteLine("GameHub hub connected");
-            Console.WriteLine($"Player {Context.User.Identity.Name} connected");
-            var game = GameRepository.Games.FirstOrDefault(g => !g.Value.InProgress).Value;
-            
-            if (game == null)
+            try
             {
-                game = new GameLogic()
+//                var existedGame = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayerId(playerID)).Value;
+//                if (existedGame != null)
+//                    await Reconnect();
+                
+                GameRepository.Players.Add(new Player
                 {
-                    Id = Guid.NewGuid().ToString(), 
-                    Player1 = { ConnectionId = Context.ConnectionId, PlayerId = playerID, 
-                    Name = Context.User.Identity.Name, Lifes = 3, Points = 0 }
+                    Name = Context.User.Identity.Name,
+                    ConnectionId = Context.ConnectionId
+                });
+
+                int playersCount = GameRepository.Players.Count;
+                Console.WriteLine($"Players count {GameRepository.Players.Count}");
+                
+                Console.WriteLine("GameHub hub connected");
+                Console.WriteLine($"Player {Context.User.Identity.Name} connected");
+//                var game = GameRepository.Games.FirstOrDefault(g => !g.Value.InProgress).Value;
+//
+//                if (game.Player1.PlayerId != playerID)
+//                    await Clients.Client(game.Player1.ConnectionId).ToLobby();
+//                
+//                if (game.Player2.PlayerId != playerID)
+//                    await Clients.Client(Context.ConnectionId).ToLobby();
+
+                var game = new GameLogic
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Player1 =
+                    {
+                        ConnectionId = GameRepository.Players[playersCount - 2].ConnectionId,
+                        PlayerId = playerID,
+                        Name = GameRepository.Players[playersCount - 2].Name,
+                        Lifes = 3,  Points = 0
+                    },
+                    Player2 =
+                    {
+                        ConnectionId = GameRepository.Players[playersCount - 1].ConnectionId,
+                        PlayerId = playerID,
+                        Name = GameRepository.Players[playersCount - 1].Name,
+                        Lifes = 3,  Points = 0
+                    }
                 };
                 
                 GameRepository.Games[game.Id] = game;
 
-                var game1 = GameRepository.Games[game.Id] ?? throw new ArgumentNullException();
-                if(game1 == null)
-                    GameRepository.Games[game.Id] = game;
-
-                if(game.Player1.PlayerId != playerID)
-				  await Clients.Client(Context.ConnectionId).ToLobby();
-            }
-            else
-            {
-                game.Player2.ConnectionId = Context.ConnectionId;
-                game.Player2.PlayerId = playerID;
-                game.Player2.Name = Context.User.Identity.Name;
-                game.Player2.Lifes = 3;
-                game.Player2.Points = 0;
-				
-			    if(game.Player2.PlayerId != playerID)
-				  await Clients.Client(Context.ConnectionId).ToLobby();
-			  
                 game.InProgress = true;
+
+                if (GameRepository.Players.Count >= 2)
+                {
+                    await Groups.AddToGroupAsync(GameRepository.Players[playersCount - 2].ConnectionId, game.Id);
+                    await Groups.AddToGroupAsync(GameRepository.Players[playersCount - 1].ConnectionId, game.Id);
+                }
+                
+//                await Groups.AddToGroupAsync(Context.ConnectionId, game.Id);
+
+                if (game.InProgress && GameRepository.Players.Count >= 2)
+                {
+                    Console.WriteLine($"Player1 ID: {game.Player1.ConnectionId}");
+                    Console.WriteLine($"Player2 ID: {game.Player2.ConnectionId}");
+                    await Clients.Group(game.Id).PrepareRound();
+                    await Clients.Group(game.Id).Timeout();
+                    await Clients.Client(game.Player1.ConnectionId).OwnField(game.Field1);
+                    await Clients.Client(game.Player2.ConnectionId).OwnField(game.Field2);
+                    await Clients.Group(game.Id).Players(game.Player1, game.Player2);
+                    await Clients.Group(game.Id).Points(game.Player1.Points, game.Player2.Points);
+                    game.Prepare = true;
+                    game.NextPlayer();
+                    Console.WriteLine("Prepare round: 20 sec");
+                }
             }
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, game.Id);
-
-            if (game.InProgress)
+            catch (Exception ex)
             {
-                Console.WriteLine($"Player1 ID: {game.Player1.ConnectionId}");
-                Console.WriteLine($"Player2 ID: {game.Player2.ConnectionId}");
-                await Clients.Group(game.Id).PrepareRound();
-                await Clients.Group(game.Id).Timeout();
-                await Clients.Client(game.Player1.ConnectionId).OwnField(game.Field1);
-                await Clients.Client(game.Player2.ConnectionId).OwnField(game.Field2);
-                await Clients.Group(game.Id).Players(game.Player1, game.Player2);
-                await Clients.Group(game.Id).Points(game.Player1.Points, game.Player2.Points);
-                game.Prepare = true;
-                game.NextPlayer();
-                Console.WriteLine("Prepare round: 20 sec");
+                Console.WriteLine(ex.Message);
             }
-            await base.OnConnectedAsync();
+
+            finally
+            {
+                await base.OnConnectedAsync();
+            }
         }
         
         public override async Task OnDisconnectedAsync(Exception exception)
