@@ -28,12 +28,8 @@ namespace MultiMinesweeper.Controllers
         {
             _repositoryContext.HighScores.Add(new HighScores
             {
-                Id = Guid.NewGuid(),
-                Points = highScores.Points,
-                PlusRating = highScores.PlusRating,
-                MinusRating = highScores.MinusRating,
-                Win = highScores.Win,
-                Lose = highScores.Lose
+                Id = Guid.NewGuid(), Points = highScores.Points, PlusRating = highScores.PlusRating,
+                MinusRating = highScores.MinusRating, Win = highScores.Win, Lose = highScores.Lose
             });
 
             await _repositoryContext.SaveChangesAsync();
@@ -48,16 +44,12 @@ namespace MultiMinesweeper.Controllers
                 _repositoryContext.SaveChanges();
             }
 
-            
             var records = await _repositoryContext.Records.FirstOrDefaultAsync(item => item.Login == highScores.Win);
             if (records == null)
             {
                 _repositoryContext.Records.Add(new Records
                 {
-                    Login = highScores.Win,
-                    Lose = 0,
-                    Win = 1,
-                    Points = firstPlayer.Points
+                    Login = highScores.Win, Lose = 0, Win = 1, Points = firstPlayer.Points
                 });
 
                 await _repositoryContext.SaveChangesAsync();
@@ -84,10 +76,7 @@ namespace MultiMinesweeper.Controllers
             {
                 _repositoryContext.Records.Add(new Records
                 {
-                    Login = highScores.Lose,
-                    Lose = 1,
-                    Win = 0,
-                    Points = 0
+                    Login = highScores.Lose, Lose = 1, Win = 0, Points = 0
                 });
 
                 await _repositoryContext.SaveChangesAsync();

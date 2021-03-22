@@ -8,9 +8,7 @@ namespace MultiMinesweeper.Game
         public string Id { get; set; }
         public Player Player1 { get; private set; }
         public Player Player2 { get; private set; }
-        public Player ReconnectedPlayer { get; set; }
         public Player CurrentPlayer { get; set; }
-        private const int NumberOfRows = 16;
         public int FirstPlayerMineCounter { get; set; }
         public int SecondPlayerMineCounter { get; set; }
         public int FirstPlayerFlagCounter { get; set; }
@@ -20,7 +18,6 @@ namespace MultiMinesweeper.Game
         
         public GameField[][] Field1;
         public GameField[][] Field2; 
-        
         public bool Prepare { get; set; }
         public bool InProgress { get; set; }
         public GameLogic()
@@ -70,20 +67,20 @@ namespace MultiMinesweeper.Game
         
         public GameField[][] InitialiazeOwnField()
         {
-            Field1 = new GameField[NumberOfRows][];
+            Field1 = new GameField[(int)GameSettings.NumberOfRows][];
             
-            for (int i = 0; i < NumberOfRows; i++)
-                Field1[i] = new GameField[NumberOfRows];
+            for (int i = 0; i < (int)GameSettings.NumberOfRows; i++)
+                Field1[i] = new GameField[(int)GameSettings.NumberOfRows];
             
             return Field1;
         }
         
         public GameField[][] InitialiazeEnemyField()
         {
-            Field2 = new GameField[NumberOfRows][];
+            Field2 = new GameField[(int)GameSettings.NumberOfRows][];
             
-            for (int i = 0; i < NumberOfRows; i++)
-                Field2[i] = new GameField[NumberOfRows];
+            for (int i = 0; i < (int)GameSettings.NumberOfRows; i++)
+                Field2[i] = new GameField[(int)GameSettings.NumberOfRows];
             
             return Field2;
         }
@@ -102,90 +99,10 @@ namespace MultiMinesweeper.Game
         }
         public GameField[][] CountMines(int row, int cell, GameField[][] field)
         {
-            if (row > 0 && cell == 0)
-            {
-                for (int x = -1; x < 2; x++)
-                {
-                    for (int y = 0; y < 1; y++)
-                    {
-                        if (field[row][cell+1].MinedCell)
-                            field[row][cell].NeighbourCells++;
-                    } 
-                }
-            }
-            else if (row > 0 && cell == NumberOfRows-1)
-            {
-                for (int x = -1; x < 2; x++)
-                {
-                    for (int y = 0; y < 1; y++)
-                    {
-                        if (field[row][cell-1].MinedCell)
-                            field[row][cell].NeighbourCells++;
-                    } 
-                }
-            }
-            else if (row == NumberOfRows-1 && cell > 0)
-            {
-                for (int x = -1; x < 2; x++)
-                {
-                    for (int y = 0; y < 1; y++)
-                    {
-                        if (field[row-1][cell].MinedCell)
-                            field[row][cell].NeighbourCells++;
-                    } 
-                }
-            }
-            else if (row == 0 && cell > 0)
-            {
-                for (int x = -1; x < 2; x++)
-                {
-                    for (int y = 0; y < 1; y++)
-                    {
-                        if (field[row+1][cell].MinedCell)
-                            field[row][cell].NeighbourCells++;
-                    } 
-                }
-            }
-            else if (row == NumberOfRows-1 && cell == 0)
-            {
-                if (field[row-1][cell+1].MinedCell)
-                    field[row][cell].NeighbourCells++;
-                
-                if (field[row-1][cell].MinedCell)
-                    field[row][cell].NeighbourCells++;
-                
-                if (field[row][cell+1].MinedCell)
-                    field[row][cell].NeighbourCells++;
-            }
-            else if(row == NumberOfRows-1 && cell == NumberOfRows-1)
-            {
-                if (field[row-1][cell].MinedCell)
-                    field[row][cell].NeighbourCells++;
-                
-                if (field[row-1][cell-1].MinedCell)
-                    field[row][cell].NeighbourCells++;
-                
-                if (field[row][cell-1].MinedCell)
-                    field[row][cell].NeighbourCells++;
-            }
-            else if (row == 0 && cell == 0)
-            {
-                if (field[row][cell+1].MinedCell)
-                    field[row][cell].NeighbourCells++;
-                
-                if (field[row+1][cell].MinedCell)
-                    field[row][cell].NeighbourCells++;
-                
-                if (field[row+1][cell+1].MinedCell)
-                    field[row][cell].NeighbourCells++;
-            }
-            else
-            {
-                for (int x = -1; x < 2; x++)
-                {
-                    for (int y = -1; y < 2; y++)
-                    {
-                        if (field[row + x][cell + y].MinedCell)
+            for (int x = row - 1; x <= row + 1; x++) {
+                for (int y = cell - 1; y <= cell + 1; y++) {
+                    if(x >= 0 && x < (int)GameSettings.NumberOfRows && y >= 0 && y < (int)GameSettings.NumberOfRows) {
+                        if (field[x][y].MinedCell)
                             field[row][cell].NeighbourCells++;
                     }
                 }
@@ -203,11 +120,11 @@ namespace MultiMinesweeper.Game
         
         public bool IsWin(int clickedCellCounter)
         {
-            for (int i = 0; i < NumberOfRows; i++)
+            for (int i = 0; i < (int)GameSettings.NumberOfRows; i++)
             {
-                for (int j = 0; j < NumberOfRows; j++)
+                for (int j = 0; j < (int)GameSettings.NumberOfRows; j++)
                 {
-                    if (clickedCellCounter == NumberOfRows * NumberOfRows)
+                    if (clickedCellCounter == (int)GameSettings.NumberOfRows >> 2)
                         return true;
                 }
             }

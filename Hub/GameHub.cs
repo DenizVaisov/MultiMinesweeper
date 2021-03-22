@@ -16,7 +16,6 @@ namespace MultiMinesweeper.Hub
     {
         private readonly IHubContext<GameHub> _hubContext;
         private readonly RepositoryContext _context;
-        private const int mineCount = 24;
         private long playerID;
 
         public GameHub(IHubContext<GameHub> hubContext, RepositoryContext context)
@@ -27,7 +26,6 @@ namespace MultiMinesweeper.Hub
 
         public async Task TimeIsUp()
         {
-            Console.WriteLine("Time is up");
             var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId)).Value;
             await Clients.Client(game.CurrentPlayer.ConnectionId).StopTimer();
             game.NextPlayer();
@@ -38,24 +36,31 @@ namespace MultiMinesweeper.Hub
 
         public async Task CheckTime()
         {
-            Console.WriteLine("Invoke CheckTime");
             var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId)).Value;
-            
-            await TimeIsUp();
-//            if (game.Prepare == false) return;
-            game.Prepare = false;
 
+            if (!game.Prepare)
+            {
+                await TimeIsUp();
+                return;
+            }
+
+            game.Prepare = false;
             
             await Clients.Group(game.Id).Points(game.Player1.Points, game.Player2.Points);
-            await Clients.Group(game.Id).Status(game.CurrentPlayer);
+            await Clients.Group(game.Id).Status(game.Player1);
+            await Clients.Group(game.Id).Status(game.Player2);
+            
             await Clients.Client(game.Player1.ConnectionId).ShowField(game.Field1);
             await Clients.Client(game.Player2.ConnectionId).ShowField(game.Field2);
+            
             await Clients.Client(game.Player1.ConnectionId).EnemyField(game.Field2);
             await Clients.Client(game.Player1.ConnectionId).HideEnemyMines();
+            
             await Clients.Client(game.Player2.ConnectionId).EnemyField(game.Field1);
             await Clients.Client(game.Player2.ConnectionId).HideEnemyMines();
-            await Clients.Group(game.Id).PlayerTurn(game.CurrentPlayer);
-            await Clients.Group(game.Id).Status(game.CurrentPlayer);
+            
+            game.CurrentPlayer = game.Player2;
+//            await Clients.Group(game.Id).PlayerTurn(game.CurrentPlayer);
             await Clients.Group(game.Id).CompetitiveStage();
         }
 
@@ -70,7 +75,7 @@ namespace MultiMinesweeper.Hub
                 if (game.Player1.ConnectionId == Context.ConnectionId)
                 {
                     if (game.Field1[row][cell].NumberCell) return;
-                    if (game.FirstPlayerMineCounter == mineCount) return;
+                    if (game.FirstPlayerMineCounter == (int)GameSettings.MinesCount) return;
                     
                     game.FirstPlayerMineCounter++;
                     game.FirstPlayerCellClicked++;
@@ -81,7 +86,7 @@ namespace MultiMinesweeper.Hub
                 else
                 {
                     if (game.Field2[row][cell].NumberCell) return;
-                    if (game.SecondPlayerMineCounter == mineCount) return;
+                    if (game.SecondPlayerMineCounter == (int)GameSettings.MinesCount) return;
                     
                     game.SecondPlayerMineCounter++;
                     game.SecondPlayerCellClicked++;
@@ -105,8 +110,8 @@ namespace MultiMinesweeper.Hub
             if (field[row][cell].MinedCell)
             {
                 field[row][cell].Kaboom = true;
-                game.CurrentPlayer.Lifes -= 1;
                 field[row][cell].MinedCell = false;
+                game.CurrentPlayer.Lifes -= 1;
                 
                 await Clients.Client(Context.ConnectionId).Mined();
                 await Clients.Group(game.Id).Points(game.Player1.Points, game.Player2.Points);
@@ -164,6 +169,7 @@ namespace MultiMinesweeper.Hub
                 {
                     Console.WriteLine("Game Over");
                     await Clients.Client(game.Player1.ConnectionId).GameOver(game.Player1, game.Player2);
+                    GameRepository.Games.Remove(game.Id);
                 }
             }
 
@@ -181,6 +187,7 @@ namespace MultiMinesweeper.Hub
                 {
                     Console.WriteLine("Game Over");
                     await Clients.Client(game.Player2.ConnectionId).GameOver(game.Player2, game.Player1);
+                    GameRepository.Games.Remove(game.Id);
                 }
             }
 
@@ -210,7 +217,7 @@ namespace MultiMinesweeper.Hub
             {
                 if (game.Field1[row][cell].Merged) return;
                 if (game.Field2[row][cell].NumberCell) return;
-                if (game.FirstPlayerFlagCounter == mineCount) return;
+                if (game.FirstPlayerFlagCounter == (int)GameSettings.MinesCount) return;
                 if (game.Field2[row][cell].MinedCell)
                     game.Field2[row][cell].MinedCell = false;
                 
@@ -222,7 +229,7 @@ namespace MultiMinesweeper.Hub
             {
                 if (game.Field2[row][cell].Merged) return;
                 if (game.Field1[row][cell].NumberCell) return;
-                if (game.SecondPlayerFlagCounter == mineCount) return;
+                if (game.SecondPlayerFlagCounter == (int)GameSettings.MinesCount) return;
                 if (game.Field1[row][cell].MinedCell)
                     game.Field1[row][cell].MinedCell = false;
                     
@@ -270,64 +277,40 @@ namespace MultiMinesweeper.Hub
         {
             try
             {
-//                var existedGame = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayerId(playerID)).Value;
-//                if (existedGame != null)
-//                    await Reconnect();
-                
-                GameRepository.Players.Add(new Player
-                {
-                    Name = Context.User.Identity.Name,
-                    ConnectionId = Context.ConnectionId
-                });
-
-                int playersCount = GameRepository.Players.Count;
-                Console.WriteLine($"Players count {GameRepository.Players.Count}");
-                
                 Console.WriteLine("GameHub hub connected");
+                Console.WriteLine($"Players count {GameRepository.PlayersConnections.Count}");
                 Console.WriteLine($"Player {Context.User.Identity.Name} connected");
-//                var game = GameRepository.Games.FirstOrDefault(g => !g.Value.InProgress).Value;
-//
-//                if (game.Player1.PlayerId != playerID)
-//                    await Clients.Client(game.Player1.ConnectionId).ToLobby();
-//                
-//                if (game.Player2.PlayerId != playerID)
-//                    await Clients.Client(Context.ConnectionId).ToLobby();
+                
+                GameRepository.PlayersConnections.Add(Context.User.Identity.Name, Context.ConnectionId);
+                int playersCount = GameRepository.PlayersConnections.Count;
 
                 var game = new GameLogic
                 {
                     Id = Guid.NewGuid().ToString(),
                     Player1 =
                     {
-                        ConnectionId = GameRepository.Players[playersCount - 2].ConnectionId,
+                        ConnectionId = GameRepository.PlayersConnections.ElementAt(playersCount - 2).Value,
                         PlayerId = playerID,
-                        Name = GameRepository.Players[playersCount - 2].Name,
-                        Lifes = 3,  Points = 0
+                        Name = GameRepository.PlayersConnections.ElementAt(playersCount - 2).Key,
+                        Lifes = (int)GameSettings.Lifes,  Points = (int)GameSettings.Points
                     },
                     Player2 =
                     {
-                        ConnectionId = GameRepository.Players[playersCount - 1].ConnectionId,
+                        ConnectionId = GameRepository.PlayersConnections.ElementAt(playersCount - 1).Value,
                         PlayerId = playerID,
-                        Name = GameRepository.Players[playersCount - 1].Name,
-                        Lifes = 3,  Points = 0
+                        Name = GameRepository.PlayersConnections.ElementAt(playersCount - 1).Key,
+                        Lifes = (int)GameSettings.Lifes,  Points = (int)GameSettings.Points
                     }
                 };
                 
                 GameRepository.Games[game.Id] = game;
-
                 game.InProgress = true;
 
-                if (GameRepository.Players.Count >= 2)
+                if (game.InProgress && GameRepository.PlayersConnections.Count >= 2)
                 {
-                    await Groups.AddToGroupAsync(GameRepository.Players[playersCount - 2].ConnectionId, game.Id);
-                    await Groups.AddToGroupAsync(GameRepository.Players[playersCount - 1].ConnectionId, game.Id);
-                }
-                
-//                await Groups.AddToGroupAsync(Context.ConnectionId, game.Id);
-
-                if (game.InProgress && GameRepository.Players.Count >= 2)
-                {
-                    Console.WriteLine($"Player1 ID: {game.Player1.ConnectionId}");
-                    Console.WriteLine($"Player2 ID: {game.Player2.ConnectionId}");
+                    await Groups.AddToGroupAsync(game.Player1.ConnectionId, game.Id);
+                    await Groups.AddToGroupAsync(game.Player2.ConnectionId, game.Id);
+                    
                     await Clients.Group(game.Id).PrepareRound();
                     await Clients.Group(game.Id).Timeout();
                     await Clients.Client(game.Player1.ConnectionId).OwnField(game.Field1);
@@ -335,7 +318,6 @@ namespace MultiMinesweeper.Hub
                     await Clients.Group(game.Id).Players(game.Player1, game.Player2);
                     await Clients.Group(game.Id).Points(game.Player1.Points, game.Player2.Points);
                     game.Prepare = true;
-                    game.NextPlayer();
                     Console.WriteLine("Prepare round: 20 sec");
                 }
             }
@@ -357,9 +339,11 @@ namespace MultiMinesweeper.Hub
 
             if (game != null && game.Player1.Lifes == 0 || game != null && game.Player2.Lifes == 0)
             {
+                Console.WriteLine("GameHub disconnected\n");
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, game.Id);
                 GameRepository.Games.Remove(game.Id);
-                Console.WriteLine("GameHub disconnected\n");
+                GameRepository.PlayersConnections.Remove(game.Player1.Name);
+                GameRepository.PlayersConnections.Remove(game.Player2.Name);
                 await base.OnDisconnectedAsync(exception);
             }
         }
