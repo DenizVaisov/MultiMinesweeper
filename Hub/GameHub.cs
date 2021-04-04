@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using MultiMinesweeper.Game;
 using MultiMinesweeper.HubContract;
 using MultiMinesweeper.Model;
@@ -14,16 +15,115 @@ namespace MultiMinesweeper.Hub
     [Authorize] 
     public class GameHub : Hub<IGameClient>
     {
-        private readonly IHubContext<GameHub> _hubContext;
         private readonly RepositoryContext _context;
+        private readonly Random _random;
         private long playerID;
 
-        public GameHub(IHubContext<GameHub> hubContext, RepositoryContext context)
+        public GameHub(RepositoryContext context, Random random)
         {
-            _hubContext = hubContext;
             _context = context;
+            _random = random;
         }
 
+        public async Task GameResult(HighScores highScores)
+        {
+            _context.HighScores.Add(new HighScores
+            {
+                Id = Guid.NewGuid(), Points = highScores.Points, PlusRating = highScores.PlusRating,
+                MinusRating = highScores.MinusRating, Win = highScores.Win, Lose = highScores.Lose
+            });
+
+            await _context.SaveChangesAsync();
+
+            var query = await _context.Users.FirstOrDefaultAsync(item => item.Login == highScores.Win);
+            var firstPlayer = await _context.Users.FirstOrDefaultAsync(item => item.Login == highScores.Win);
+
+            if (query != null)
+            {
+                query.Points = firstPlayer.Points + highScores.PlusRating;
+                _context.Users.Update(query);
+                _context.SaveChanges();
+            }
+
+            var records = await _context.Records.FirstOrDefaultAsync(item => item.Login == highScores.Win);
+            if (records == null)
+            {
+                _context.Records.Add(new Records
+                {
+                    Login = highScores.Win, Lose = 0, Win = 1, Points = firstPlayer.Points
+                });
+
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                var _recordQuery =
+                    await _context.Records.FirstOrDefaultAsync(item => item.Login == highScores.Win);
+                var recordQuery =
+                    await _context.Records.FirstOrDefaultAsync(item => item.Login == highScores.Win);
+
+                recordQuery.Points = firstPlayer.Points;
+                recordQuery.Login = firstPlayer.Login;
+                recordQuery.Win = _recordQuery.Win + 1;
+                _context.Records.Update(recordQuery);
+                await _context.SaveChangesAsync();
+            }
+
+            var _query = await _context.Users.FirstOrDefaultAsync(item => item.Login == highScores.Lose);
+            var secondPlayer = await _context.Users.FirstOrDefaultAsync(item => item.Login == highScores.Lose);
+            
+            var _records = await _context.Records.FirstOrDefaultAsync(item => item.Login == highScores.Lose);
+            if (_records == null)
+            {
+                _context.Records.Add(new Records
+                {
+                    Login = highScores.Lose, Lose = 1, Win = 0, Points = 0
+                });
+
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                var recQuery =
+                    await _context.Records.FirstOrDefaultAsync(item => item.Login == highScores.Lose);
+                var _recQuery =
+                    await _context.Records.FirstOrDefaultAsync(item => item.Login == highScores.Lose);
+
+                if (secondPlayer.Points + highScores.MinusRating < 0)
+                {
+                    _recQuery.Points = 0;
+                    _recQuery.Login = secondPlayer.Login;
+                    _recQuery.Lose = recQuery.Lose + 1;
+                    _context.Records.Update(_recQuery);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    _recQuery.Points = secondPlayer.Points + highScores.MinusRating;
+                    _recQuery.Login = secondPlayer.Login;
+                    _recQuery.Lose = recQuery.Lose + 1;
+                    _context.Records.Update(_recQuery);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            
+            if (_query != null)
+            {
+                if (secondPlayer.Points + highScores.MinusRating < 0)
+                {
+                    _query.Points = 0;
+                    _context.Users.Update(_query);
+                    _context.SaveChanges();
+                }
+                else
+                {
+                    _query.Points = secondPlayer.Points + highScores.MinusRating;
+                    _context.Users.Update(_query);
+                    _context.SaveChanges();
+                }
+            }
+        }
+        
         public async Task TimeIsUp()
         {
             var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId)).Value;
@@ -59,8 +159,7 @@ namespace MultiMinesweeper.Hub
             await Clients.Client(game.Player2.ConnectionId).EnemyField(game.Field1);
             await Clients.Client(game.Player2.ConnectionId).HideEnemyMines();
             
-            game.CurrentPlayer = game.Player2;
-//            await Clients.Group(game.Id).PlayerTurn(game.CurrentPlayer);
+            await Clients.Group(game.Id).PlayerTurn(game.CurrentPlayer);
             await Clients.Group(game.Id).CompetitiveStage();
         }
 
@@ -118,16 +217,17 @@ namespace MultiMinesweeper.Hub
                 await Clients.Client(Context.ConnectionId).Status(game.CurrentPlayer);
                 if (game.CurrentPlayer.Lifes == 0)
                 {
-                    await Clients.Client(Context.ConnectionId).Lose();
+                    await Clients.Client(game.CurrentPlayer.ConnectionId).Lose();
+
                     if (game.CurrentPlayer.Name == game.Player1.Name)
                     {
-                         await Clients.Group(game.Id).GameOver(game.Player2, game.CurrentPlayer);
-                         GameRepository.Games.Remove(game.Id);
+                        await GameOver(game.Player2.ConnectionId, game.Id, game.Player2.Name, game.Player1.Name, game.Player2.Points, game.Player1.Points);
+                        Console.WriteLine($"Games continues: {GameRepository.Games.Count}");
                     }
                     else
                     {
-                        await Clients.Group(game.Id).GameOver(game.Player1, game.Player2);
-                        GameRepository.Games.Remove(game.Id);
+                        await GameOver(game.Player1.ConnectionId, game.Id, game.Player1.Name, game.Player2.Name, game.Player1.Points, game.Player2.Points);
+                        Console.WriteLine($"Games continues: {GameRepository.Games.Count}");
                     }
                 }
             }
@@ -167,9 +267,8 @@ namespace MultiMinesweeper.Hub
 
                 if (game.IsWin(game.FirstPlayerCellClicked))
                 {
-                    Console.WriteLine("Game Over");
-                    await Clients.Client(game.Player1.ConnectionId).GameOver(game.Player1, game.Player2);
-                    GameRepository.Games.Remove(game.Id);
+                    await GameOver(game.Player1.ConnectionId, game.Id, game.Player1.Name, game.Player2.Name, game.Player1.Points, game.Player2.Points);
+                    Console.WriteLine($"Games continues: {GameRepository.Games.Count}");
                 }
             }
 
@@ -185,9 +284,8 @@ namespace MultiMinesweeper.Hub
 
                 if (game.IsWin(game.SecondPlayerCellClicked))
                 {
-                    Console.WriteLine("Game Over");
-                    await Clients.Client(game.Player2.ConnectionId).GameOver(game.Player2, game.Player1);
-                    GameRepository.Games.Remove(game.Id);
+                    await GameOver(game.Player2.ConnectionId, game.Id, game.Player2.Name, game.Player1.Name, game.Player2.Points, game.Player1.Points);
+                    Console.WriteLine($"Games continues: {GameRepository.Games.Count}");
                 }
             }
 
@@ -246,7 +344,16 @@ namespace MultiMinesweeper.Hub
         {
             var game = GameRepository.Games.FirstOrDefault(g => g.Value.HasPlayer(Context.ConnectionId)).Value;
             if (game != null)
+            {
+                Console.WriteLine(Context.User.Identity.Name, message);
                 await Clients.Group(game.Id).ReceiveMessage(Context.User.Identity.Name, message);
+            }
+        }
+        
+        private async Task CoinToss(GameLogic game)
+        {
+            var result = _random.Next(2);
+            game.CurrentPlayer = result == 1 ? game.Player1 : game.Player2;
         }
 
         public async Task Reconnect()
@@ -273,6 +380,22 @@ namespace MultiMinesweeper.Hub
                 await CheckTime();
             }
         }
+
+        public async Task GameOver(string playerConnectionId, string gameId, string win, string lose, int winPlayerPoints, int losePlayerPoints)
+        {
+            Console.WriteLine("Game Over");
+            await Clients.Client(playerConnectionId).Win();
+            await Clients.Client(playerConnectionId).GameOver();
+            GameRepository.Games.Remove(gameId);
+            await GameResult(new HighScores
+            {
+                Points = 25, Win = win, Lose = lose,
+                PlusRating = 25 + winPlayerPoints, MinusRating = -25 + losePlayerPoints
+            });
+            LobbyRepository.PlayersToGame.Remove(win);
+            LobbyRepository.PlayersToGame.Remove(lose);
+        }
+        
         public override async Task OnConnectedAsync()
         {
             try
@@ -280,43 +403,54 @@ namespace MultiMinesweeper.Hub
                 Console.WriteLine("GameHub hub connected");
                 Console.WriteLine($"Players count {GameRepository.PlayersConnections.Count}");
                 Console.WriteLine($"Player {Context.User.Identity.Name} connected");
-                
-                GameRepository.PlayersConnections.Add(Context.User.Identity.Name, Context.ConnectionId);
-                int playersCount = GameRepository.PlayersConnections.Count;
 
+                if (!LobbyRepository.PlayersToGame.ContainsKey(Context.User.Identity.Name))
+                {
+                    await Clients.Client(Context.ConnectionId).ToLobby();
+                    return;
+                }
+
+                GameRepository.PlayersConnections.Add(Context.User.Identity.Name, Context.ConnectionId);
+                GameRepository.PlayersOnGameHubConnect.Add(Context.User.Identity.Name, Context.ConnectionId);
+                int playersCount = GameRepository.PlayersOnGameHubConnect.Count;
+                
                 var game = new GameLogic
                 {
                     Id = Guid.NewGuid().ToString(),
                     Player1 =
                     {
-                        ConnectionId = GameRepository.PlayersConnections.ElementAt(playersCount - 2).Value,
+                        ConnectionId = GameRepository.PlayersOnGameHubConnect.ElementAt(playersCount - 2).Value,
                         PlayerId = playerID,
-                        Name = GameRepository.PlayersConnections.ElementAt(playersCount - 2).Key,
+                        Name = GameRepository.PlayersOnGameHubConnect.ElementAt(playersCount - 2).Key,
                         Lifes = (int)GameSettings.Lifes,  Points = (int)GameSettings.Points
                     },
                     Player2 =
                     {
-                        ConnectionId = GameRepository.PlayersConnections.ElementAt(playersCount - 1).Value,
+                        ConnectionId = GameRepository.PlayersOnGameHubConnect.ElementAt(playersCount - 1).Value,
                         PlayerId = playerID,
-                        Name = GameRepository.PlayersConnections.ElementAt(playersCount - 1).Key,
+                        Name = GameRepository.PlayersOnGameHubConnect.ElementAt(playersCount - 1).Key,
                         Lifes = (int)GameSettings.Lifes,  Points = (int)GameSettings.Points
                     }
                 };
                 
                 GameRepository.Games[game.Id] = game;
+                GameRepository.PlayersOnGameHubConnect.Remove(game.Player1.Name);
+                GameRepository.PlayersOnGameHubConnect.Remove(game.Player2.Name);
+                
+                await Groups.AddToGroupAsync(game.Player1.ConnectionId, game.Id);
+                await Groups.AddToGroupAsync(game.Player2.ConnectionId, game.Id);
                 game.InProgress = true;
 
-                if (game.InProgress && GameRepository.PlayersConnections.Count >= 2)
+                if (game.InProgress)
                 {
-                    await Groups.AddToGroupAsync(game.Player1.ConnectionId, game.Id);
-                    await Groups.AddToGroupAsync(game.Player2.ConnectionId, game.Id);
-                    
+                    await Clients.Group(game.Id).ShowGame();
                     await Clients.Group(game.Id).PrepareRound();
                     await Clients.Group(game.Id).Timeout();
                     await Clients.Client(game.Player1.ConnectionId).OwnField(game.Field1);
                     await Clients.Client(game.Player2.ConnectionId).OwnField(game.Field2);
                     await Clients.Group(game.Id).Players(game.Player1, game.Player2);
                     await Clients.Group(game.Id).Points(game.Player1.Points, game.Player2.Points);
+                    await CoinToss(game);
                     game.Prepare = true;
                     Console.WriteLine("Prepare round: 20 sec");
                 }
@@ -342,6 +476,7 @@ namespace MultiMinesweeper.Hub
                 Console.WriteLine("GameHub disconnected\n");
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, game.Id);
                 GameRepository.Games.Remove(game.Id);
+                Console.WriteLine($"Games continues: {GameRepository.Games.Count}");
                 GameRepository.PlayersConnections.Remove(game.Player1.Name);
                 GameRepository.PlayersConnections.Remove(game.Player2.Name);
                 await base.OnDisconnectedAsync(exception);

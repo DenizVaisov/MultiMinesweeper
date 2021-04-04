@@ -17,8 +17,9 @@ namespace MultiMinesweeper.HubContract
         Task CompetitiveStage();
         Task Players(Player player1, Player player2);
         Task Points(int player1, int player2);
+        Task Win();
         Task Lose();
-        Task GameOver(Player win, Player lose);
+        Task GameOver();
         Task MinesPlaced(int minesPlaced);
         Task MinesAllowed(int minesCount);
         Task Mined();
@@ -31,5 +32,6 @@ namespace MultiMinesweeper.HubContract
         Task ReceiveMessage(string player, string message);
         Task Reconnect(Player player, GameField[][] ownField, GameField[][] enemyField);
         Task ToLobby();
+        Task ShowGame();
     }
 }

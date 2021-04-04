@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using MultiMinesweeper.Game;
@@ -17,7 +17,6 @@ namespace MultiMinesweeper.Hub
     {
         private readonly RepositoryContext _context;
         private double ratingCoeficent = (double)GameSettings.Rating;
-        private bool isRankingStart;
         public LobbyHub(RepositoryContext context)
         {
             _context = context;
@@ -48,66 +47,70 @@ namespace MultiMinesweeper.Hub
 
         public async Task PlayersRanking()
         {
-            if (LobbyRepository.ConnectedPlayersRating.Count >= 2)
-            {
-                try
-                {
-                    int playersCount = LobbyRepository.ConnectedPlayersRating.Count;
-                    await Clients.Clients(LobbyRepository.Players).PlayersInRanking(playersCount);
+         try
+         {
+             while (LobbyRepository.ConnectedPlayersRating.Count > 0)
+             {
+                 int playersCount = LobbyRepository.ConnectedPlayersRating.Count;
+                 List<string> playersConnectionId = LobbyRepository.ConnectedPlayersRating.Select(p => p.ConnectionId).ToList();
+                 await Clients.Clients(playersConnectionId).PlayersInRanking(playersCount);
+					
+                 Console.WriteLine("Finding players");
+                 Console.WriteLine($"Players in rating: {LobbyRepository.ConnectedPlayersRating.Count}");
+                    
+                 if (LobbyRepository.ConnectedPlayersRating.Count == 1 || 
+                     LobbyRepository.ConnectedPlayersRating.Count == 0) 
+                     return; 
+                    
+                 for (int i = 0; i < playersCount - 1; i++)
+                 {
+                     for (int j = i + 1; j < playersCount; j++)
+                     {
+                         if (LobbyRepository.ConnectedPlayersRating[i].Points >=
+                             LobbyRepository.ConnectedPlayersRating[j].Points * 0.1 * ratingCoeficent
+                             && LobbyRepository.ConnectedPlayersRating[j].Points >=
+                             LobbyRepository.ConnectedPlayersRating[i].Points * 0.1 * ratingCoeficent
+                         )
+                         {
+                             string firstPlayerConnectionId = LobbyRepository.ConnectedPlayersRating[j].ConnectionId;
+                             string firstPlayerName = LobbyRepository.ConnectedPlayersRating[j].Login;
+                             string secondPlayerConnectionId = LobbyRepository.ConnectedPlayersRating[i].ConnectionId;
+                             string secondPlayerName = LobbyRepository.ConnectedPlayersRating[i].Login;
+                                
+                             LobbyRepository.PlayersToGame.Add(firstPlayerName, firstPlayerConnectionId);
+                             LobbyRepository.PlayersToGame.Add(secondPlayerName, secondPlayerConnectionId);
 
-                    while (true)
-                    {
-                        Console.WriteLine("Finding players");
-                        Console.WriteLine($"Players in rating: {LobbyRepository.ConnectedPlayersRating.Count}");
-                        
-                        if (LobbyRepository.ConnectedPlayersRating.Count == 1 || 
-                            LobbyRepository.ConnectedPlayersRating.Count == 0) 
-                            break; 
-                        
-                        for (int i = 0; i < playersCount - 1; i++)
-                        {
-                            for (int j = i + 1; j < playersCount; j++)
-                            {
-                                if (LobbyRepository.ConnectedPlayersRating.Count >= 2
-                                    && LobbyRepository.ConnectedPlayersRating[i].Points >=
-                                    LobbyRepository.ConnectedPlayersRating[j].Points * 0.1 * ratingCoeficent
-                                    && LobbyRepository.ConnectedPlayersRating[j].Points >=
-                                    LobbyRepository.ConnectedPlayersRating[i].Points * 0.1 * ratingCoeficent
-                                )
-                                {
-                                    string firstPlayerConnectionId = LobbyRepository.ConnectedPlayersRating[j].ConnectionId;
-                                    string secondPlayerConnectionId = LobbyRepository.ConnectedPlayersRating[i].ConnectionId;
-                                    
-                                    LobbyRepository.PlayersToGame.Add(firstPlayerConnectionId);
-                                    LobbyRepository.PlayersToGame.Add(secondPlayerConnectionId);
+                             ratingCoeficent = (double)GameSettings.Rating;
+                             await Clients.Clients(LobbyRepository.PlayersToGame.Select(p => p.Value).ToList()).ToTheGame();
+								
+                             LobbyRepository.ConnectedPlayersRating.RemoveAll(p => p.ConnectionId == firstPlayerConnectionId);
+                             LobbyRepository.ConnectedPlayersRating.RemoveAll(player => player.ConnectionId == secondPlayerConnectionId);
+                                
+                             LobbyRepository.Players.Remove(firstPlayerConnectionId);
+                             LobbyRepository.Players.Remove(secondPlayerConnectionId);
+                                
+                             playersCount = LobbyRepository.ConnectedPlayersRating.Count;
+                             playersConnectionId = LobbyRepository.ConnectedPlayersRating.Select(p => p.ConnectionId).ToList();
+                             await Clients.Clients(playersConnectionId).PlayersInRanking(playersCount);
+                             await Clients.All.PlayersOnline(LobbyRepository.Players);
+                         }
+                     }
+                 }
 
-                                    ratingCoeficent = (double)GameSettings.Rating;
-                                    await Clients.Clients(LobbyRepository.PlayersToGame).ToTheGame();
-                                    
-                                    LobbyRepository.ConnectedPlayersRating.RemoveAll(player => player.ConnectionId == firstPlayerConnectionId);
-                                    LobbyRepository.ConnectedPlayersRating.RemoveAll(player => player.ConnectionId == secondPlayerConnectionId);
-                                    LobbyRepository.Players.Remove(firstPlayerConnectionId);
-                                    LobbyRepository.Players.Remove(secondPlayerConnectionId);
-                                    
-                                    playersCount = LobbyRepository.ConnectedPlayersRating.Count;
-                                    await Clients.Clients(LobbyRepository.Players).PlayersInRanking(playersCount);
-                                    await Clients.All.PlayersOnline(LobbyRepository.Players);
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        if (ratingCoeficent > 5 && LobbyRepository.ConnectedPlayersRating.Count >= 2)
-                            ratingCoeficent -= 0.1;
-                        Thread.Sleep(3000);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
-                }
-            }
+                 if (ratingCoeficent > 5 && LobbyRepository.ConnectedPlayersRating.Count >= 2)
+                 {
+                     ratingCoeficent -= 0.1;
+                     Console.WriteLine(ratingCoeficent);
+                 }
+
+                 Thread.Sleep(1000);
+             }
+         }
+         catch (Exception e)
+         {
+             Console.WriteLine(e);
+             throw;
+         }
         }
 
         public async Task MatchPlayers()
@@ -117,19 +120,17 @@ namespace MultiMinesweeper.Hub
                 .Select(p => p.Points)
                 .SingleOrDefault();
             
-//            if(LobbyRepository.ConnectedPlayersRating.Exists(player => player.Login == Context.User.Identity.Name)) return;
             LobbyRepository.ConnectedPlayersRating.Add(new Rating
             {
                 ConnectionId = Context.ConnectionId, Login = Context.User.Identity.Name, Points = points
             });
-            
-            CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
-            CancellationToken token = cancelTokenSource.Token;
 
-            if(!isRankingStart)
+            if (LobbyRepository.ConnectedPlayersRating.Count < 2)
+            {
+                CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
+                CancellationToken token = cancelTokenSource.Token;
                 await RunPeriodicallyAsync(PlayersRanking, 2000, token);
-//            await PlayersRanking();
-            isRankingStart = true;
+            }
         }
 
         public override async Task OnConnectedAsync()
