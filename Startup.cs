@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using MultiMinesweeper.Game;
 using MultiMinesweeper.Hub;
 
@@ -22,8 +23,6 @@ namespace MultiMinesweeper
         public IConfiguration Configuration { get; }
         
         public const string CookieAuthScheme = "CookieAuthScheme";
-
-        
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
@@ -65,6 +64,7 @@ namespace MultiMinesweeper
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddScoped<GameLogic>();
             services.AddSingleton(new Random());
+            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

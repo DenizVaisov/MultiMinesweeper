@@ -6,8 +6,40 @@
 
 
 @section Styles
-{
-    
+{	
+	<style type="text/css">
+		.form {
+			margin-top: 35%;
+		}
+	
+		.news-btn {
+			position: absolute; 
+			right: 15px;
+		}	  
+   </style>
+   <style type="text/css" media="screen and (max-width:660px)">
+		.form-control {
+			font-size: 1.2rem;
+		}
+	
+		.form-header {
+			font-size: 1.8rem;
+		}
+		
+		.btn {
+			font-size: 1.2rem;
+		}
+		
+		.reg-btn {
+			width: 100% !important;
+		}
+		
+	   .news-btn {
+			position: initial !important;
+			margin-top: 18px !important;
+			width: 100% !important;
+	   }	   
+    </style>
 }
 
 @section LibStyles
@@ -23,11 +55,11 @@
 
 <div class="container-fluid">
     <div class="row">
-        <div class="offset-sm-4 offset-3 col-md-4 col-6">
-            <div style="margin-top: 25%">
+        <div class="offset-1 offset-md-4 col-md-4 col-10">
+            <div class="form">
                 <form method="post" action="@Url.Action("SignIn", "Auth")">
                     @Html.AntiForgeryToken()
-                    <h3 align="center">Авторизация</h3>
+                    <h3 class="form-header" align="center">Авторизация</h3>
                     <div class="input-group">
                         <input placeholder="Логин" id="login" class="form-control mb-3" type="text" name="Login" value="@Model.Login" required>
                     </div>
@@ -38,8 +70,8 @@
                         <button type="submit" id="btn" class="btn btn-outline-success  btn-block">Войти</button>
                     </div>
                     <div class="form-group">
-                        <a class="btn btn-outline-primary" href="@Url.Action("Register", "Auth")">Регистрация</a>
-                        <a style="position: absolute; right: 15px" class="btn btn-outline-info" href="@Url.Action("Index", "Home")">Новости</a>
+                        <a class="reg-btn btn btn-outline-primary" href="@Url.Action("Register", "Auth")">Регистрация</a>
+                        <a class="news-btn btn btn-outline-info" href="@Url.Action("Index", "Home")">Новости</a>
                     </div>
                 </form>
                 <p class="text-danger" >@Model.Message</p>

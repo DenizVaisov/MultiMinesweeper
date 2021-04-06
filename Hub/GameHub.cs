@@ -385,7 +385,7 @@ namespace MultiMinesweeper.Hub
         {
             Console.WriteLine("Game Over");
             await Clients.Client(playerConnectionId).Win();
-            await Clients.Client(playerConnectionId).GameOver();
+            await Clients.Group(gameId).GameOver();
             GameRepository.Games.Remove(gameId);
             await GameResult(new HighScores
             {
@@ -394,6 +394,8 @@ namespace MultiMinesweeper.Hub
             });
             LobbyRepository.PlayersToGame.Remove(win);
             LobbyRepository.PlayersToGame.Remove(lose);
+            GameRepository.PlayersConnections.Remove(win);
+            GameRepository.PlayersConnections.Remove(lose);
         }
         
         public override async Task OnConnectedAsync()
@@ -471,16 +473,15 @@ namespace MultiMinesweeper.Hub
         {
             var game = GameRepository.Games.FirstOrDefault(g => g.Value.Player1.ConnectionId == Context.ConnectionId || g.Value.Player2.ConnectionId == Context.ConnectionId).Value;
 
-            if (game != null && game.Player1.Lifes == 0 || game != null && game.Player2.Lifes == 0)
-            {
-                Console.WriteLine("GameHub disconnected\n");
-                await Groups.RemoveFromGroupAsync(Context.ConnectionId, game.Id);
-                GameRepository.Games.Remove(game.Id);
-                Console.WriteLine($"Games continues: {GameRepository.Games.Count}");
-                GameRepository.PlayersConnections.Remove(game.Player1.Name);
-                GameRepository.PlayersConnections.Remove(game.Player2.Name);
-                await base.OnDisconnectedAsync(exception);
-            }
+            Console.WriteLine("GameHub disconnected\n");
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, game.Id);
+            GameRepository.Games.Remove(game.Id);
+            Console.WriteLine($"Games continues: {GameRepository.Games.Count}");
+            GameRepository.PlayersConnections.Remove(game.Player1.Name);
+            GameRepository.PlayersConnections.Remove(game.Player2.Name);
+            LobbyRepository.PlayersToGame.Remove(game.Player1.Name);
+            LobbyRepository.PlayersToGame.Remove(game.Player2.Name);
+            await base.OnDisconnectedAsync(exception);
         }
     }
 }

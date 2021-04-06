@@ -7,7 +7,11 @@
 
 @section Styles
 {
-  
+  <style type="text/css" media="screen and (max-width:800px)">
+	.img {
+		height: 250px;
+	}
+  </style>
 }
 
 @section LibStyles
@@ -40,14 +44,20 @@
   </nav>   
 </div>
 <div class="container">
-  <h1>Последние новости игровой платформы MultiMinesweeper</h1>
+  <div class="row">
+	<div class="col-12 col-md-12">
+		<h1>Последние новости игровой платформы MultiMinesweeper</h1>
+	</div>
+  </div>
       @foreach (var news in Model)
       {
           <div class="row">
-            <div class="col-12">
-            <h3>@news.Title</h3>
-            <p>@news.Description</p>     
-            <img src="@news.Image"/>
+            <div class="col-12 col-md-12">
+				<h3>@news.Title</h3>
+				<h6>@news.Description</h6>
+				<div class="text-center">			
+					<img class="img center-block" src="@news.Image"/>
+				</div>
             </div>
           </div>
       }

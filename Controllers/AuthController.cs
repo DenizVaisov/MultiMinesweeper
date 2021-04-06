@@ -45,7 +45,7 @@ namespace MultiMinesweeper.Controllers
                     await Authenticate(model.Login);
                     return RedirectPermanent("http://192.168.43.159:8080");
                 }
-                return View(new SignIn{ Message = "Пользователя с таким логином или паролем не найден", Login = model.Login});
+                return View(new SignIn{ Message = "Введен неверный логин или пароль! Проверьте расскладку клавиатуры!", Login = model.Login});
             }
             return View(model);
         }

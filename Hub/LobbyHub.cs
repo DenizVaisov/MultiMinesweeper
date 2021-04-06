@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using MultiMinesweeper.Game;
 using MultiMinesweeper.HubContract;
@@ -21,10 +22,21 @@ namespace MultiMinesweeper.Hub
         {
             _context = context;
         }
-        public async Task SendMessage(string user, string message)
+
+        public async Task SendAllMessages()
+        {
+            Console.WriteLine($"Messages count: {LobbyRepository.ChatMessages.Count}");
+            await Clients.Client(Context.ConnectionId).ReceiveAllMessages(LobbyRepository.ChatMessages);
+        }
+        
+        public async Task SendMessage(string user, string message, string time)
         {
             Console.WriteLine($"Message Received by: {user}");
-            await Clients.All.ReceiveMessage(user, message);
+            var size = GC.GetTotalMemory(true);
+            LobbyRepository.ChatMessages.Add(new Chat {Name = user, Message = message, Time = time});
+            Console.WriteLine($"Messages count: {LobbyRepository.ChatMessages.Count}");
+            Console.WriteLine($"Memory used: {GC.GetTotalMemory(true) - size}");
+            await Clients.All.ReceiveMessage(user, message, time);
         }
         public async Task CheckPlayers()
         {
@@ -39,9 +51,17 @@ namespace MultiMinesweeper.Hub
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                Console.WriteLine("Start ranking");
-                await Task.Delay(interval, cancellationToken);
-                await func();
+                try
+                {
+                    Console.WriteLine("Start ranking");
+                    await Task.Delay(interval, cancellationToken);
+                    await func();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
             }
         }
 
@@ -66,11 +86,11 @@ namespace MultiMinesweeper.Hub
                  {
                      for (int j = i + 1; j < playersCount; j++)
                      {
-                         if (LobbyRepository.ConnectedPlayersRating[i].Points >=
-                             LobbyRepository.ConnectedPlayersRating[j].Points * 0.1 * ratingCoeficent
-                             && LobbyRepository.ConnectedPlayersRating[j].Points >=
-                             LobbyRepository.ConnectedPlayersRating[i].Points * 0.1 * ratingCoeficent
-                         )
+                         double firstPlayerPoints = LobbyRepository.ConnectedPlayersRating[i].Points;
+                         double secondPlayerPoints = LobbyRepository.ConnectedPlayersRating[j].Points;
+                         if (firstPlayerPoints >= secondPlayerPoints * 0.1 * ratingCoeficent
+                             && secondPlayerPoints >= firstPlayerPoints * 0.1 * ratingCoeficent
+                             || firstPlayerPoints <= 100 && secondPlayerPoints <= 100)
                          {
                              string firstPlayerConnectionId = LobbyRepository.ConnectedPlayersRating[j].ConnectionId;
                              string firstPlayerName = LobbyRepository.ConnectedPlayersRating[j].Login;
@@ -80,12 +100,11 @@ namespace MultiMinesweeper.Hub
                              LobbyRepository.PlayersToGame.Add(firstPlayerName, firstPlayerConnectionId);
                              LobbyRepository.PlayersToGame.Add(secondPlayerName, secondPlayerConnectionId);
 
-                             ratingCoeficent = (double)GameSettings.Rating;
-                             await Clients.Clients(LobbyRepository.PlayersToGame.Select(p => p.Value).ToList()).ToTheGame();
+                             var playersToGameConnectionId = LobbyRepository.PlayersToGame.Select(p => p.Value).ToList();
+                             await Clients.Clients(playersToGameConnectionId).ToTheGame();
 								
                              LobbyRepository.ConnectedPlayersRating.RemoveAll(p => p.ConnectionId == firstPlayerConnectionId);
-                             LobbyRepository.ConnectedPlayersRating.RemoveAll(player => player.ConnectionId == secondPlayerConnectionId);
-                                
+                             LobbyRepository.ConnectedPlayersRating.RemoveAll(p => p.ConnectionId == secondPlayerConnectionId);
                              LobbyRepository.Players.Remove(firstPlayerConnectionId);
                              LobbyRepository.Players.Remove(secondPlayerConnectionId);
                                 
@@ -93,6 +112,7 @@ namespace MultiMinesweeper.Hub
                              playersConnectionId = LobbyRepository.ConnectedPlayersRating.Select(p => p.ConnectionId).ToList();
                              await Clients.Clients(playersConnectionId).PlayersInRanking(playersCount);
                              await Clients.All.PlayersOnline(LobbyRepository.Players);
+                             ratingCoeficent = (double)GameSettings.Rating;
                          }
                      }
                  }
