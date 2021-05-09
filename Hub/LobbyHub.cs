@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,17 +26,20 @@ namespace MultiMinesweeper.Hub
 
         public async Task SendAllMessages()
         {
-            Console.WriteLine($"Messages count: {LobbyRepository.ChatMessages.Count}");
-            await Clients.Client(Context.ConnectionId).ReceiveAllMessages(LobbyRepository.ChatMessages);
+            Console.WriteLine($"Messages count: {LobbyRepository.LobbyChat.Count}");
+            await Clients.Client(Context.ConnectionId).ReceiveAllMessages(LobbyRepository.LobbyChat);
+        }
+
+        public async Task DeleteAllMessages()
+        {
+            LobbyRepository.LobbyChat.Clear();
+            await Clients.All.ReceiveMessage("", "All messages will be deleted every 24 hours", DateTime.UtcNow.ToString(CultureInfo.InvariantCulture));
         }
         
         public async Task SendMessage(string user, string message, string time)
         {
             Console.WriteLine($"Message Received by: {user}");
-            var size = GC.GetTotalMemory(true);
-            LobbyRepository.ChatMessages.Add(new Chat {Name = user, Message = message, Time = time});
-            Console.WriteLine($"Messages count: {LobbyRepository.ChatMessages.Count}");
-            Console.WriteLine($"Memory used: {GC.GetTotalMemory(true) - size}");
+            LobbyRepository.LobbyChat.Add(new Chat {Name = user, Message = message, Time = time});
             await Clients.All.ReceiveMessage(user, message, time);
         }
         public async Task CheckPlayers()
@@ -53,14 +57,12 @@ namespace MultiMinesweeper.Hub
             {
                 try
                 {
-                    Console.WriteLine("Start ranking");
                     await Task.Delay(interval, cancellationToken);
                     await func();
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
-                    throw;
+                    Console.WriteLine(e.StackTrace);
                 }
             }
         }
@@ -149,6 +151,7 @@ namespace MultiMinesweeper.Hub
             {
                 CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
                 CancellationToken token = cancelTokenSource.Token;
+                Console.WriteLine("Start ranking");
                 await RunPeriodicallyAsync(PlayersRanking, 2000, token);
             }
         }

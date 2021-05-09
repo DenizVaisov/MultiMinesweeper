@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using MultiMinesweeper.Game;
 using MultiMinesweeper.Model;
 
@@ -8,6 +9,7 @@ namespace MultiMinesweeper.HubContract
     {
         Task OwnField(GameField[][] mineField);
         Task ShowField(GameField[][] mineField);
+        Task HideField();
         Task HintField(GameField[][] mineField);
         Task HideEnemyMines();
         Task EnemyField(GameField[][] mineField);
@@ -15,7 +17,7 @@ namespace MultiMinesweeper.HubContract
         Task PlayerTurn(Player player);
         Task CompetitiveStage();
         Task Players(Player player1, Player player2);
-        Task Points(int player1, int player2);
+        Task Points(int playerPoints);
         Task Win();
         Task Lose();
         Task GameOver();
@@ -28,7 +30,8 @@ namespace MultiMinesweeper.HubContract
         Task YourTurn();
         Task Timeout();
         Task NotYourTurn();
-        Task ReceiveMessage(string player, string message);
+        Task ReceiveMessage(string player, string message, string time);
+        Task ReceiveAllMessages(List<Chat> gameChat);
         Task Reconnect(Player player, GameField[][] ownField, GameField[][] enemyField);
         Task ToLobby();
         Task ShowGame();

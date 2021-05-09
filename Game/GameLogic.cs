@@ -9,6 +9,9 @@ namespace MultiMinesweeper.Game
         public Player Player1 { get; private set; }
         public Player Player2 { get; private set; }
         public Player CurrentPlayer { get; set; }
+        
+        public string FirstPlayerName { get; set; }
+        public string SecondPlayerName { get; set; }
         public int FirstPlayerMineCounter { get; set; }
         public int SecondPlayerMineCounter { get; set; }
         public int FirstPlayerFlagCounter { get; set; }
@@ -43,28 +46,17 @@ namespace MultiMinesweeper.Game
             }
         }
         
-        public bool HasPlayer(string connectionId)
+        public bool HasPlayer(string connectionIdOrName)
         {
-            if (Player1 != null && Player1.ConnectionId == connectionId)
+            if (Player1 != null && (Player1.ConnectionId == connectionIdOrName || Player1.Name == connectionIdOrName))
                 return true;
             
-            if (Player2 != null && Player2.ConnectionId == connectionId)
+            if (Player2 != null && (Player2.ConnectionId == connectionIdOrName || Player2.Name == connectionIdOrName))
                 return true;
             
             return false;
         }
 
-        public bool HasPlayerId(long id)
-        {
-            if (Player1 != null && Player1.PlayerId == id)
-                return true;
-            
-            if (Player2 != null && Player2.PlayerId == id)
-                return true;
-            
-            return false;
-        }
-        
         public GameField[][] InitialiazeOwnField()
         {
             Field1 = new GameField[(int)GameSettings.NumberOfRows][];

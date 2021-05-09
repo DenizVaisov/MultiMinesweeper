@@ -9,6 +9,9 @@ namespace MultiMinesweeper.Model
         [Column("id")]
         public Guid Id { get; set; }
         
+        [Column("date")]
+        public DateTime Date { get; set; }
+        
         [Column("points")]
         public long Points { get; set; }
         
@@ -17,6 +20,12 @@ namespace MultiMinesweeper.Model
         
         [Column("minus_points")]
         public int MinusRating { get; set; }
+        
+        [Column("firstPlayer")]
+        public string FirstPlayer { get; set; }
+        
+        [Column("secondPlayer")]
+        public string SecondPlayer { get; set; }
         
         [Column("win")]
         public string Win { get; set; }
